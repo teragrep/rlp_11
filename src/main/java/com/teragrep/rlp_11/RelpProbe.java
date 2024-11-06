@@ -239,10 +239,12 @@ public class RelpProbe {
         stayRunning = false;
         try {
             if (!latch.await(5L, TimeUnit.SECONDS)) {
+                LOGGER.error("Timed out while waiting for probe to shutdown.");
                 throw new RuntimeException("Timed out while waiting for probe to shutdown.");
             }
         }
         catch (InterruptedException e) {
+            LOGGER.error("Interrupted while waiting for latch countdown");
             throw new RuntimeException(e);
         }
         LOGGER.info("RelpProbe stopped.");

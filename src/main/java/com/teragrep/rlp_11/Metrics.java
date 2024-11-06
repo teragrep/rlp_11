@@ -70,6 +70,7 @@ public class Metrics {
         this.connects = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "connects"));
         this.disconnects = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "disconnects"));
         this.retriedConnects = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "retriedConnects"));
+        // TODO: Configurable window?
         this.sendLatency = metricRegistry
                 .timer(name(Metrics.class, "<[" + name + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(10000)));
         this.connectLatency = metricRegistry
