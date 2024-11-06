@@ -130,29 +130,29 @@ public class RelpProbeConfiguration {
             throw new RelpProbeConfigurationError("Missing <prometheus.endpoint> property");
         }
 
-        String reconnectInterval = config.get("relp.reconnectinterval");
+        String reconnectInterval = config.get("target.reconnectinterval");
         if (reconnectInterval == null) {
-            LOGGER.error("Missing <relp.reconnectinterval> property");
-            throw new RelpProbeConfigurationError("Missing <relp.reconnectinterval> property");
+            LOGGER.error("Missing <target.reconnectinterval> property");
+            throw new RelpProbeConfigurationError("Missing <target.reconnectinterval> property");
         }
         try {
             int reconnectIntervalInt = Integer.parseInt(reconnectInterval);
             if (reconnectIntervalInt <= 0) {
                 LOGGER
                         .error(
-                                "Invalid <relp.reconnectinterval> property, property, expected > 0, received <[{}]>",
+                                "Invalid <target.reconnectinterval> property, property, expected > 0, received <[{}]>",
                                 reconnectIntervalInt
                         );
                 throw new RelpProbeConfigurationError(
-                        "Invalid <relp.reconnectinterval> property, expected > 0, received <[" + reconnectInterval
+                        "Invalid <target.reconnectinterval> property, expected > 0, received <[" + reconnectInterval
                                 + "]>"
                 );
             }
         }
         catch (NumberFormatException e) {
-            LOGGER.error("Invalid <relp.reconnectinterval> property received, not a number: <{}>", e.getMessage());
+            LOGGER.error("Invalid <target.reconnectinterval> property received, not a number: <{}>", e.getMessage());
             throw new RelpProbeConfigurationError(
-                    "Invalid <relp.reconnectinterval> property received, not a number: <" + e.getMessage() + ">"
+                    "Invalid <target.reconnectinterval> property received, not a number: <" + e.getMessage() + ">"
             );
         }
     }
@@ -182,6 +182,6 @@ public class RelpProbeConfiguration {
     }
 
     public int getReconnectInterval() {
-        return Integer.parseInt(config.get("relp.reconnectinterval"));
+        return Integer.parseInt(config.get("target.reconnectinterval"));
     }
 }

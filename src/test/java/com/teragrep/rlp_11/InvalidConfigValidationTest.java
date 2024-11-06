@@ -167,31 +167,33 @@ public class InvalidConfigValidationTest {
     @Test
     public void testMissingReconnectInterval() {
         Map<String, String> map = getDefaultMap();
-        map.remove("relp.reconnectinterval");
+        map.remove("target.reconnectinterval");
         RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
         Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
-        Assertions.assertEquals("Missing <relp.reconnectinterval> property", e.getMessage());
+        Assertions.assertEquals("Missing <target.reconnectinterval> property", e.getMessage());
     }
 
     @Test
     public void testZeroReconnectInterval() {
         Map<String, String> map = getDefaultMap();
-        map.put("relp.reconnectinterval", "0");
+        map.put("target.reconnectinterval", "0");
         RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
         Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
         Assertions
-                .assertEquals("Invalid <relp.reconnectinterval> property, expected > 0, received <[0]>", e.getMessage());
+                .assertEquals(
+                        "Invalid <target.reconnectinterval> property, expected > 0, received <[0]>", e.getMessage()
+                );
     }
 
     @Test
     public void testNonNumericReconnectInterval() {
         Map<String, String> map = getDefaultMap();
-        map.put("relp.reconnectinterval", "not a number");
+        map.put("target.reconnectinterval", "not a number");
         RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
         Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
         Assertions
                 .assertEquals(
-                        "Invalid <relp.reconnectinterval> property received, not a number: <For input string: \"not a number\">",
+                        "Invalid <target.reconnectinterval> property received, not a number: <For input string: \"not a number\">",
                         e.getMessage()
                 );
     }
@@ -213,6 +215,7 @@ public class InvalidConfigValidationTest {
         map.put("event.delay", "1000");
         map.put("target.hostname", "127.0.0.1");
         map.put("target.port", "12345");
+        map.put("target.reconnectinterval", "1000");
         map.put("prometheus.endpoint", "127.0.0.1:8080");
         return map;
     }

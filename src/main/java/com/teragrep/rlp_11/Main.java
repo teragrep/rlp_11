@@ -78,8 +78,9 @@ public class Main {
 
         RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
         Thread shutdownHook = new Thread(() -> {
-            LOGGER.info("Shutting down...");
+            LOGGER.info("Stopping RelpProbe..");
             relpProbe.stop();
+            LOGGER.info("Shutting down.");
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         LOGGER

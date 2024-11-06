@@ -59,6 +59,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +78,7 @@ public class ConnectionTest {
     private EventLoop eventLoop;
     private ExecutorService executorService;
     private final List<String> records = new ArrayList<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
 
     @BeforeEach
     public void StartServer() {
@@ -131,5 +134,7 @@ public class ConnectionTest {
         timer.schedule(task, 5000L);
 
         relpProbe.start();
+
+        LOGGER.info("Got records: {}", records);
     }
 }

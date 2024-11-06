@@ -93,7 +93,7 @@ public class RelpProbe {
             relpBatch.insert(record);
 
             boolean allSent = false;
-            while (!allSent) {
+            while (!allSent && stayRunning) {
                 try {
                     relpConnection.commit(relpBatch);
                 }
@@ -115,7 +115,10 @@ public class RelpProbe {
                 LOGGER.warn("Sleep interrupted: <{}>", e.getMessage());
             }
         }
-
+        LOGGER.info("Disconnecting..");
+        disconnect();
+        LOGGER.info("Disconnected.");
+        latch.countDown();
     }
 
     private void connect() {
@@ -161,7 +164,6 @@ public class RelpProbe {
     }
 
     public void stop() {
-        disconnect();
         stayRunning = false;
         try {
             if (!latch.await(5L, TimeUnit.SECONDS)) {
@@ -171,5 +173,6 @@ public class RelpProbe {
         catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        LOGGER.info("RelpProbe stopped.");
     }
 }
