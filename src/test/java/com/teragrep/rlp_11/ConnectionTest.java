@@ -58,8 +58,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +75,6 @@ public class ConnectionTest {
     private EventLoop eventLoop;
     private ThreadPoolExecutor threadPoolExecutor;
     private final List<String> records = new ArrayList<>();
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
     private Server server;
 
     @BeforeEach
@@ -88,9 +85,11 @@ public class ConnectionTest {
         eventLoopThread = new Thread(eventLoop);
         eventLoopThread.start();
 
-        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(
-                frameContext -> records.add(frameContext.relpFrame().payload().toString())
-        );
+        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate((frameContext) -> {
+            // Adds random latency before finishing and acking the event
+            Assertions.assertDoesNotThrow(() -> Thread.sleep((long) (Math.random() * 500)));
+            records.add(frameContext.relpFrame().payload().toString());
+        });
 
         threadPoolExecutor = new ThreadPoolExecutor(
                 1,
@@ -134,10 +133,8 @@ public class ConnectionTest {
             }
         };
         Timer timer = new Timer("Timer");
-        timer.schedule(task, 5000L);
+        timer.schedule(task, 10000L);
 
         relpProbe.start();
-
-        LOGGER.info("Got records: {}", records);
     }
 }

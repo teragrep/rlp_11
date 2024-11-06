@@ -65,96 +65,76 @@ public class RelpProbeConfiguration {
             LOGGER.debug("Validating the following configuration: {}", config);
         }
 
-        if (config.get("event.hostname") == null) {
-            LOGGER.error("Missing <event.hostname> property");
-            throw new RelpProbeConfigurationError("Missing <event.hostname> property");
-        }
+        getAndVerifyStringProperty("event.hostname");
+        getAndVerifyStringProperty("event.appname");
 
-        if (config.get("event.appname") == null) {
-            LOGGER.error("Missing <event.appname> property");
-            throw new RelpProbeConfigurationError("Missing <event.appname> property");
-        }
-
-        final String eventDelay = config.get("event.delay");
-        if (eventDelay == null) {
-            LOGGER.error("Missing <event.delay> property");
-            throw new RelpProbeConfigurationError("Missing <event.delay> property");
-        }
-        try {
-            final int eventDelayInt = Integer.parseInt(eventDelay);
-            if (eventDelayInt <= 0) {
-                LOGGER.error("Invalid <event.delay> property, expected > 0, received <[{}]>", eventDelay);
-                throw new RelpProbeConfigurationError(
-                        "Invalid <event.delay> property, expected > 0, received <[" + eventDelay + "]>"
-                );
-            }
-        }
-        catch (NumberFormatException e) {
-            LOGGER.error("Invalid <event.delay> property received, not a number: <{}>", e.getMessage());
+        int eventDelay = getAndVerifyNumberProperty("event.delay");
+        if (eventDelay <= 0) {
+            LOGGER.error("Invalid <event.delay> property, expected > 0, received <[{}]>", eventDelay);
             throw new RelpProbeConfigurationError(
-                    "Invalid <event.delay> property received, not a number: <" + e.getMessage() + ">"
+                    "Invalid <event.delay> property, expected > 0, received <[" + eventDelay + "]>"
             );
         }
 
-        if (config.get("target.hostname") == null) {
-            LOGGER.error("Missing <target.hostname> property");
-            throw new RelpProbeConfigurationError("Missing <target.hostname> property");
-        }
+        getAndVerifyStringProperty("target.hostname");
 
-        final String targetPort = config.get("target.port");
-        if (targetPort == null) {
-            LOGGER.error("Missing <target.port> property");
-            throw new RelpProbeConfigurationError("Missing <target.port> property");
-        }
-        try {
-            final int targetPortInt = Integer.parseInt(targetPort);
-            if (targetPortInt <= 0 || targetPortInt > MAXIMUM_PORT) {
-                LOGGER
-                        .error(
-                                "Invalid <target.port> property, expected between 1 and {}, received <[{}]>",
-                                MAXIMUM_PORT, targetPort
-                        );
-                throw new RelpProbeConfigurationError(
-                        "Invalid <target.port> property, expected between 1 and " + MAXIMUM_PORT + ", received <["
-                                + targetPort + "]>"
-                );
-            }
-        }
-        catch (NumberFormatException e) {
-            LOGGER.error("Invalid <target.port> property received, not a number: <{}>", e.getMessage());
+        int targetPort = getAndVerifyNumberProperty("target.port");
+        if (targetPort <= 0 || targetPort > MAXIMUM_PORT) {
+            LOGGER
+                    .error(
+                            "Invalid <target.port> property, expected between 1 and {}, received <[{}]>", MAXIMUM_PORT,
+                            targetPort
+                    );
             throw new RelpProbeConfigurationError(
-                    "Invalid <target.port> property received, not a number: <" + e.getMessage() + ">"
+                    "Invalid <target.port> property, expected between 1 and " + MAXIMUM_PORT + ", received <["
+                            + targetPort + "]>"
             );
         }
 
-        if (config.get("prometheus.endpoint") == null) {
-            LOGGER.error("Missing <prometheus.endpoint> property");
-            throw new RelpProbeConfigurationError("Missing <prometheus.endpoint> property");
+        int prometheusPort = getAndVerifyNumberProperty("prometheus.port");
+        if (prometheusPort <= 0 || prometheusPort > MAXIMUM_PORT) {
+            LOGGER
+                    .error(
+                            "Invalid <prometheus.port> property, expected between 1 and {}, received <[{}]>",
+                            MAXIMUM_PORT, prometheusPort
+                    );
+            throw new RelpProbeConfigurationError(
+                    "Invalid <prometheus.port> property, expected between 1 and " + MAXIMUM_PORT + ", received <["
+                            + prometheusPort + "]>"
+            );
         }
 
-        final String reconnectInterval = config.get("target.reconnectinterval");
-        if (reconnectInterval == null) {
-            LOGGER.error("Missing <target.reconnectinterval> property");
-            throw new RelpProbeConfigurationError("Missing <target.reconnectinterval> property");
+        int reconnectInterval = getAndVerifyNumberProperty("target.reconnectinterval");
+        if (reconnectInterval <= 0) {
+            LOGGER
+                    .error(
+                            "Invalid <target.reconnectinterval> property, property, expected > 0, received <[{}]>",
+                            reconnectInterval
+                    );
+            throw new RelpProbeConfigurationError(
+                    "Invalid <target.reconnectinterval> property, expected > 0, received <[" + reconnectInterval + "]>"
+            );
         }
+    }
+
+    private String getAndVerifyStringProperty(String name) {
+        String property = config.get(name);
+        if (property == null) {
+            LOGGER.error("Missing <{}> property", name);
+            throw new RelpProbeConfigurationError("Missing <" + name + "> property");
+        }
+        return property;
+    }
+
+    private int getAndVerifyNumberProperty(String name) {
+        String property = getAndVerifyStringProperty(name);
         try {
-            final int reconnectIntervalInt = Integer.parseInt(reconnectInterval);
-            if (reconnectIntervalInt <= 0) {
-                LOGGER
-                        .error(
-                                "Invalid <target.reconnectinterval> property, property, expected > 0, received <[{}]>",
-                                reconnectIntervalInt
-                        );
-                throw new RelpProbeConfigurationError(
-                        "Invalid <target.reconnectinterval> property, expected > 0, received <[" + reconnectInterval
-                                + "]>"
-                );
-            }
+            return Integer.parseInt(property);
         }
         catch (NumberFormatException e) {
-            LOGGER.error("Invalid <target.reconnectinterval> property received, not a number: <{}>", e.getMessage());
+            LOGGER.error("Invalid <{}> property received, not a number: <{}>", name, e.getMessage());
             throw new RelpProbeConfigurationError(
-                    "Invalid <target.reconnectinterval> property received, not a number: <" + e.getMessage() + ">"
+                    "Invalid <" + name + "> property received, not a number: <" + e.getMessage() + ">"
             );
         }
     }
@@ -179,8 +159,8 @@ public class RelpProbeConfiguration {
         return Integer.parseInt(config.get("target.port"));
     }
 
-    public String getPrometheusEndpoint() {
-        return config.get("prometheus.endpoint");
+    public int getPrometheusPort() {
+        return Integer.parseInt(config.get("prometheus.port"));
     }
 
     public int getReconnectInterval() {

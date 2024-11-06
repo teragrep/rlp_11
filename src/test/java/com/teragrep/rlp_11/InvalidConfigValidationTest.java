@@ -117,7 +117,7 @@ public class InvalidConfigValidationTest {
 
     // target.port tests
     @Test
-    public void testMissingPort() {
+    public void testMissingTargetPort() {
         Map<String, String> map = getDefaultMap();
         map.remove("target.port");
         RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
@@ -202,10 +202,49 @@ public class InvalidConfigValidationTest {
     @Test
     public void testMissingPrometheusEndpoint() {
         Map<String, String> map = getDefaultMap();
-        map.remove("prometheus.endpoint");
+        map.remove("prometheus.port");
         RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
         Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
-        Assertions.assertEquals("Missing <prometheus.endpoint> property", e.getMessage());
+        Assertions.assertEquals("Missing <prometheus.port> property", e.getMessage());
+    }
+
+    @Test
+    public void testTooSmallPrometheusPort() {
+        Map<String, String> map = getDefaultMap();
+        map.put("prometheus.port", "0");
+        RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
+        Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
+        Assertions
+                .assertEquals(
+                        "Invalid <prometheus.port> property, expected between 1 and 65535, received <[0]>",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    public void testTooHighPrometheusPort() {
+        Map<String, String> map = getDefaultMap();
+        map.put("prometheus.port", "65536");
+        RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
+        Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
+        Assertions
+                .assertEquals(
+                        "Invalid <prometheus.port> property, expected between 1 and 65535, received <[65536]>",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    public void testNonNumericPrometheusPort() {
+        Map<String, String> map = getDefaultMap();
+        map.put("prometheus.port", "not a number");
+        RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
+        Exception e = Assertions.assertThrowsExactly(RelpProbeConfigurationError.class, configuration::validate);
+        Assertions
+                .assertEquals(
+                        "Invalid <prometheus.port> property received, not a number: <For input string: \"not a number\">",
+                        e.getMessage()
+                );
     }
 
     private Map<String, String> getDefaultMap() {
@@ -216,7 +255,7 @@ public class InvalidConfigValidationTest {
         map.put("target.hostname", "127.0.0.1");
         map.put("target.port", "12345");
         map.put("target.reconnectinterval", "1000");
-        map.put("prometheus.endpoint", "127.0.0.1:8080");
+        map.put("prometheus.port", "8080");
         return map;
     }
 }

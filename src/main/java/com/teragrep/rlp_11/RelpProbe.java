@@ -45,11 +45,15 @@
  */
 package com.teragrep.rlp_11;
 
+import com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.Timer;
+import com.codahale.metrics.jmx.JmxReporter;
 import com.teragrep.rlo_14.Facility;
 import com.teragrep.rlo_14.Severity;
 import com.teragrep.rlo_14.SyslogMessage;
 import com.teragrep.rlp_01.RelpBatch;
 import com.teragrep.rlp_01.RelpConnection;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,12 +77,41 @@ public class RelpProbe {
     private RelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
     private boolean connected = false;
+    public final Metrics metrics;
+    private final JmxReporter jmxReporter;
+    private final Slf4jReporter slf4jReporter;
+    private final Server jettyServer;
 
     public RelpProbe(final RelpProbeConfiguration config) {
+        this(config, new Metrics(config.getTargetHostname() + ":" + config.getTargetPort()));
+    }
+
+    public RelpProbe(final RelpProbeConfiguration config, final Metrics metrics) {
+        this(
+                config,
+                metrics,
+                JmxReporter.forRegistry(metrics.metricRegistry).build(),
+                Slf4jReporter.forRegistry(metrics.metricRegistry).outputTo(LoggerFactory.getLogger(RelpProbe.class)).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build(), new Server(config.getPrometheusPort())
+        );
+    }
+
+    public RelpProbe(
+            final RelpProbeConfiguration config,
+            final Metrics metrics,
+            JmxReporter jmxReporter,
+            Slf4jReporter slf4jReporter,
+            Server jettyServer
+    ) {
         this.config = config;
+        this.metrics = metrics;
+        this.jmxReporter = jmxReporter;
+        this.slf4jReporter = slf4jReporter;
+        this.jettyServer = jettyServer;
     }
 
     public void start() {
+        this.jmxReporter.start();
+        this.slf4jReporter.start(1, TimeUnit.MINUTES);
         String origin;
         try {
             origin = InetAddress.getLocalHost().getHostName();
@@ -111,9 +144,10 @@ public class RelpProbe {
 
             boolean allSent = false;
             while (!allSent && stayRunning) {
-                try {
+                try (final Timer.Context context = metrics.sendLatency.time()) {
                     LOGGER.debug("Committing Relpbatch");
                     relpConnection.commit(relpBatch);
+                    metrics.records.inc();
                 }
                 catch (IllegalStateException | IOException | java.util.concurrent.TimeoutException e) {
                     LOGGER.warn("Failed to commit: <{}>", e.getMessage());
@@ -124,6 +158,7 @@ public class RelpProbe {
                 allSent = relpBatch.verifyTransactionAll();
                 if (!allSent) {
                     LOGGER.warn("Transactions failed, retrying");
+                    metrics.resends.inc();
                     relpBatch.retryAllFailed();
                     reconnect();
                 }
@@ -138,14 +173,23 @@ public class RelpProbe {
         }
         disconnect();
         latch.countDown();
+        slf4jReporter.close();
+        jmxReporter.close();
+        try {
+            jettyServer.stop();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void connect() {
         while (!connected && stayRunning) {
-            try {
+            try (final Timer.Context context = metrics.connectLatency.time()) {
                 LOGGER.info("Connecting to <[{}:{}]>", config.getTargetHostname(), config.getTargetPort());
                 connected = relpConnection.connect(config.getTargetHostname(), config.getTargetPort());
                 LOGGER.info("Connected.");
+                metrics.connects.inc();
             }
             catch (TimeoutException | IOException e) {
                 LOGGER
@@ -158,6 +202,7 @@ public class RelpProbe {
                 try {
                     LOGGER.info("Sleeping for <[{}]>ms before reconnecting", config.getReconnectInterval());
                     Thread.sleep(config.getReconnectInterval());
+                    metrics.retriedConnects.inc();
                 }
                 catch (InterruptedException e) {
                     LOGGER.warn("Sleep was interrupted: <{}>", e.getMessage());
@@ -179,6 +224,7 @@ public class RelpProbe {
         try {
             LOGGER.info("Disconnecting..");
             relpConnection.disconnect();
+            metrics.disconnects.inc();
         }
         catch (IOException | TimeoutException e) {
             LOGGER.warn("Failed to disconnect: <{}>", e.getMessage());
