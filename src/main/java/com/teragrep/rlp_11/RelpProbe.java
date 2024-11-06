@@ -54,40 +54,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.CountDownLatch;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
 public class RelpProbe {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
     private final RelpProbeConfiguration config;
     private boolean stayRunning = true;
     private RelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
-    private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
     private boolean connected = false;
 
-    public RelpProbe(RelpProbeConfiguration config) {
+    public RelpProbe(final RelpProbeConfiguration config) {
         this.config = config;
     }
 
     public void start() {
+        String origin;
+        try {
+            origin = InetAddress.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException e) {
+            origin = "localhost";
+            LOGGER.warn("Could not get hostname, using <{}> instead", origin);
+        }
         relpConnection = new RelpConnection();
         connect();
-        int eventDelay = config.getEventDelay();
+        final int eventDelay = config.getEventDelay();
         while (stayRunning) {
-            RelpBatch relpBatch = new RelpBatch();
-            Instant timestamp = Instant.now();
-            byte[] record = new SyslogMessage()
+            final RelpBatch relpBatch = new RelpBatch();
+            final Instant timestamp = Instant.now();
+            final JsonObject event = Json
+                    .createObjectBuilder()
+                    .add("origin", origin)
+                    .add("timestamp", timestamp.getEpochSecond() + "." + timestamp.getNano())
+                    .build();
+            final byte[] record = new SyslogMessage()
                     .withTimestamp(timestamp.toEpochMilli())
                     .withAppName(config.getEventAppname())
                     .withHostname(config.getEventHostname())
                     .withFacility(Facility.USER)
                     .withSeverity(Severity.INFORMATIONAL)
-                    .withMsg(timestamp.getEpochSecond() + "." + timestamp.getNano())
+                    .withMsg(event.toString())
                     .toRfc5424SyslogMessage()
                     .getBytes(StandardCharsets.UTF_8);
             relpBatch.insert(record);

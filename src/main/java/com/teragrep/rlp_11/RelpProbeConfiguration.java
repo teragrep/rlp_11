@@ -53,9 +53,10 @@ import java.util.Map;
 public class RelpProbeConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbeConfiguration.class);
+    private static final int MAXIMUM_PORT = 65535;
     private final Map<String, String> config;
 
-    public RelpProbeConfiguration(Map<String, String> config) {
+    public RelpProbeConfiguration(final Map<String, String> config) {
         this.config = config;
     }
 
@@ -74,13 +75,13 @@ public class RelpProbeConfiguration {
             throw new RelpProbeConfigurationError("Missing <event.appname> property");
         }
 
-        String eventDelay = config.get("event.delay");
+        final String eventDelay = config.get("event.delay");
         if (eventDelay == null) {
             LOGGER.error("Missing <event.delay> property");
             throw new RelpProbeConfigurationError("Missing <event.delay> property");
         }
         try {
-            int eventDelayInt = Integer.parseInt(eventDelay);
+            final int eventDelayInt = Integer.parseInt(eventDelay);
             if (eventDelayInt <= 0) {
                 LOGGER.error("Invalid <event.delay> property, expected > 0, received <[{}]>", eventDelay);
                 throw new RelpProbeConfigurationError(
@@ -100,21 +101,22 @@ public class RelpProbeConfiguration {
             throw new RelpProbeConfigurationError("Missing <target.hostname> property");
         }
 
-        String targetPort = config.get("target.port");
+        final String targetPort = config.get("target.port");
         if (targetPort == null) {
             LOGGER.error("Missing <target.port> property");
             throw new RelpProbeConfigurationError("Missing <target.port> property");
         }
         try {
-            int targetPortInt = Integer.parseInt(targetPort);
-            if (targetPortInt <= 0 || targetPortInt > 65535) {
+            final int targetPortInt = Integer.parseInt(targetPort);
+            if (targetPortInt <= 0 || targetPortInt > MAXIMUM_PORT) {
                 LOGGER
                         .error(
-                                "Invalid <target.port> property, expected between 1 and 65535, received <[{}]>",
-                                targetPort
+                                "Invalid <target.port> property, expected between 1 and {}, received <[{}]>",
+                                MAXIMUM_PORT, targetPort
                         );
                 throw new RelpProbeConfigurationError(
-                        "Invalid <target.port> property, expected between 1 and 65535, received <[" + targetPort + "]>"
+                        "Invalid <target.port> property, expected between 1 and " + MAXIMUM_PORT + ", received <["
+                                + targetPort + "]>"
                 );
             }
         }
@@ -130,13 +132,13 @@ public class RelpProbeConfiguration {
             throw new RelpProbeConfigurationError("Missing <prometheus.endpoint> property");
         }
 
-        String reconnectInterval = config.get("target.reconnectinterval");
+        final String reconnectInterval = config.get("target.reconnectinterval");
         if (reconnectInterval == null) {
             LOGGER.error("Missing <target.reconnectinterval> property");
             throw new RelpProbeConfigurationError("Missing <target.reconnectinterval> property");
         }
         try {
-            int reconnectIntervalInt = Integer.parseInt(reconnectInterval);
+            final int reconnectIntervalInt = Integer.parseInt(reconnectInterval);
             if (reconnectIntervalInt <= 0) {
                 LOGGER
                         .error(

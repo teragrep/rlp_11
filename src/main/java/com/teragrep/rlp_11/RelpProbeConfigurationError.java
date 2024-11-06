@@ -47,7 +47,7 @@ package com.teragrep.rlp_11;
 
 public class RelpProbeConfigurationError extends RuntimeException {
 
-    public RelpProbeConfigurationError(String s) {
+    public RelpProbeConfigurationError(final String s) {
         super(s);
     }
 }

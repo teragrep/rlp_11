@@ -57,7 +57,7 @@ public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(final String[] args) {
-        PathConfiguration pathConfiguration = new PathConfiguration(
+        final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "etc/rlp_11.properties")
         );
         Map<String, String> map = null;
@@ -68,7 +68,7 @@ public class Main {
             LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage(), e);
             System.exit(1);
         }
-        RelpProbeConfiguration relpProbeConfiguration = new RelpProbeConfiguration(map);
+        final RelpProbeConfiguration relpProbeConfiguration = new RelpProbeConfiguration(map);
         try {
             relpProbeConfiguration.validate();
         }
@@ -77,8 +77,8 @@ public class Main {
             System.exit(1);
         }
 
-        RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
-        Thread shutdownHook = new Thread(() -> {
+        final RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
+        final Thread shutdownHook = new Thread(() -> {
             LOGGER.info("Stopping RelpProbe..");
             relpProbe.stop();
             LOGGER.info("Shutting down.");
