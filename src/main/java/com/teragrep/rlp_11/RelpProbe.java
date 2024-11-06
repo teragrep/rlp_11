@@ -95,6 +95,7 @@ public class RelpProbe {
             boolean allSent = false;
             while (!allSent && stayRunning) {
                 try {
+                    LOGGER.debug("Committing Relpbatch");
                     relpConnection.commit(relpBatch);
                 }
                 catch (IllegalStateException | IOException | java.util.concurrent.TimeoutException e) {
@@ -102,28 +103,30 @@ public class RelpProbe {
                     relpConnection.tearDown();
                     connected = false;
                 }
+                LOGGER.debug("Verifying Transaction");
                 allSent = relpBatch.verifyTransactionAll();
                 if (!allSent) {
+                    LOGGER.warn("Transactions failed, retrying");
                     relpBatch.retryAllFailed();
                     reconnect();
                 }
             }
             try {
+                LOGGER.debug("Sleeping before sending next event");
                 Thread.sleep(eventDelay);
             }
             catch (InterruptedException e) {
                 LOGGER.warn("Sleep interrupted: <{}>", e.getMessage());
             }
         }
-        LOGGER.info("Disconnecting..");
         disconnect();
-        LOGGER.info("Disconnected.");
         latch.countDown();
     }
 
     private void connect() {
         while (!connected && stayRunning) {
             try {
+                LOGGER.info("Connecting to <[{}:{}]>", config.getTargetHostname(), config.getTargetPort());
                 connected = relpConnection.connect(config.getTargetHostname(), config.getTargetPort());
             }
             catch (TimeoutException | IOException e) {
@@ -135,6 +138,7 @@ public class RelpProbe {
             }
             if (!connected) {
                 try {
+                    LOGGER.info("Sleeping for <[{}]>ms before reconnecting", config.getReconnectInterval());
                     Thread.sleep(config.getReconnectInterval());
                 }
                 catch (InterruptedException e) {
@@ -151,9 +155,11 @@ public class RelpProbe {
 
     private void disconnect() {
         if (!connected) {
+            LOGGER.debug("No need to disconnect, not connected");
             return;
         }
         try {
+            LOGGER.info("Disconnecting..");
             relpConnection.disconnect();
         }
         catch (IOException | TimeoutException e) {
@@ -164,6 +170,7 @@ public class RelpProbe {
     }
 
     public void stop() {
+        LOGGER.debug("Stop called");
         stayRunning = false;
         try {
             if (!latch.await(5L, TimeUnit.SECONDS)) {

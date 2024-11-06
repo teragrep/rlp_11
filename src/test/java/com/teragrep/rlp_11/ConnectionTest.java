@@ -81,8 +81,10 @@ public class ConnectionTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
 
     @BeforeEach
-    public void StartServer() {
-        executorService = Executors.newFixedThreadPool(1);
+    public void startServer() {
+        LOGGER.info("Creating SingleThreadExecutor");
+        executorService = Executors.newSingleThreadExecutor();
+        LOGGER.info("Creating consumer");
         Consumer<FrameContext> syslogConsumer = new Consumer<>() {
 
             @Override
@@ -92,30 +94,45 @@ public class ConnectionTest {
                 }
             }
         };
+
+        LOGGER.info("Creating FrameDelegateSuplpier");
         Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(syslogConsumer);
+        LOGGER.info("Creating EventLoopFactory");
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
+        LOGGER.info("Craeting eventLoopp");
         eventLoop = Assertions.assertDoesNotThrow(eventLoopFactory::create);
+        LOGGER.info("Creating eventLoopThread");
         eventLoopThread = new Thread(eventLoop);
+        LOGGER.info("Starting eventLoppThread");
         eventLoopThread.start();
+
+        LOGGER.info("Creating ServerFactory");
         ServerFactory serverFactory = new ServerFactory(
                 eventLoop,
                 executorService,
                 new PlainFactory(),
                 new FrameDelegationClockFactory(frameDelegateSupplier)
         );
+
+        LOGGER.info("Creating Server");
         Assertions.assertDoesNotThrow(() -> serverFactory.create(serverPort));
+        LOGGER.info("Leaving startServer");
     }
 
     @AfterEach
-    public void StopServer() {
+    public void stopServer() {
+        LOGGER.info("Stopping server");
         eventLoop.stop();
+        LOGGER.info("Joining server");
         Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
+        LOGGER.info("Shutting down executorService");
         executorService.shutdown();
+        LOGGER.info("Clearing records");
         records.clear();
     }
 
     @Test
-    public void ConnectToServerTest() {
+    public void connectToServerTest() {
         RelpProbeConfiguration relpProbeConfiguration = Assertions
                 .assertDoesNotThrow(
                         () -> new RelpProbeConfiguration(

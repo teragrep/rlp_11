@@ -15,6 +15,7 @@
     <java.version>17</java.version>
     <junit.platform.version>1.11.3</junit.platform.version>
     <junit.version>5.11.3</junit.version>
+    <log4j2.version>2.24.1</log4j2.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -85,9 +86,14 @@
       <version>${slf4j.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>${log4j2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j2-impl</artifactId>
+      <version>${log4j2.version}</version>
     </dependency>
     <!-- RELP Server for testing -->
     <dependency>
@@ -483,6 +489,8 @@
             <exclude>src/main/assembly/jar-with-dependencies.xml</exclude>
             <!-- test properties -->
             <exclude>src/test/resources/*.properties</exclude>
+            <!-- logging configuration -->
+            <exclude>src/main/resources/log4j2.xml</exclude>
             <!-- readme -->
             <exclude>README.adoc</exclude>
           </excludes>

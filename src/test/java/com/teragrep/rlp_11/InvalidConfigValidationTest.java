@@ -55,7 +55,7 @@ public class InvalidConfigValidationTest {
 
     // event.hostname tests
     @Test
-    public void TestMissingEventHostname() {
+    public void testMissingEventHostname() {
         Map<String, String> map = getDefaultMap();
         map.remove("event.hostname");
         RelpProbeConfiguration configuration = new RelpProbeConfiguration(map);
