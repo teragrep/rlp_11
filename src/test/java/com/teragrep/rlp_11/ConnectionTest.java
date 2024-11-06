@@ -49,11 +49,10 @@ import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
+import com.teragrep.net_01.server.Server;
 import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
-import com.teragrep.rlp_03.frame.RelpFrame;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
-import com.teragrep.rlp_03.frame.delegate.FrameContext;
 import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -66,68 +65,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.Consumer;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class ConnectionTest {
 
-    private static final int serverPort = 12345;
+    private final int serverPort = 12345;
     private Thread eventLoopThread;
     private EventLoop eventLoop;
-    private ExecutorService executorService;
+    private ThreadPoolExecutor threadPoolExecutor;
     private final List<String> records = new ArrayList<>();
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionTest.class);
+    private Server server;
 
     @BeforeEach
     public void startServer() {
-        LOGGER.info("Creating SingleThreadExecutor");
-        executorService = Executors.newSingleThreadExecutor();
-        LOGGER.info("Creating consumer");
-        Consumer<FrameContext> syslogConsumer = new Consumer<>() {
-
-            @Override
-            public synchronized void accept(FrameContext frameContext) {
-                try (RelpFrame relpFrame = frameContext.relpFrame()) {
-                    records.add(relpFrame.payload().toString());
-                }
-            }
-        };
-
-        LOGGER.info("Creating FrameDelegateSuplpier");
-        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(syslogConsumer);
-        LOGGER.info("Creating EventLoopFactory");
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
-        LOGGER.info("Craeting eventLoopp");
         eventLoop = Assertions.assertDoesNotThrow(eventLoopFactory::create);
-        LOGGER.info("Creating eventLoopThread");
+
         eventLoopThread = new Thread(eventLoop);
-        LOGGER.info("Starting eventLoppThread");
         eventLoopThread.start();
 
-        LOGGER.info("Creating ServerFactory");
+        Supplier<FrameDelegate> frameDelegateSupplier = () -> new DefaultFrameDelegate(
+                frameContext -> records.add(frameContext.relpFrame().payload().toString())
+        );
+
+        threadPoolExecutor = new ThreadPoolExecutor(
+                1,
+                1,
+                Long.MAX_VALUE,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>()
+        );
         ServerFactory serverFactory = new ServerFactory(
                 eventLoop,
-                executorService,
+                threadPoolExecutor,
                 new PlainFactory(),
                 new FrameDelegationClockFactory(frameDelegateSupplier)
         );
-
-        LOGGER.info("Creating Server");
-        Assertions.assertDoesNotThrow(() -> serverFactory.create(serverPort));
-        LOGGER.info("Leaving startServer");
+        server = Assertions.assertDoesNotThrow(() -> serverFactory.create(serverPort));
     }
 
     @AfterEach
     public void stopServer() {
-        LOGGER.info("Stopping server");
         eventLoop.stop();
-        LOGGER.info("Joining server");
+        threadPoolExecutor.shutdown();
         Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
-        LOGGER.info("Shutting down executorService");
-        executorService.shutdown();
-        LOGGER.info("Clearing records");
+        Assertions.assertDoesNotThrow(server::close);
         records.clear();
     }
 

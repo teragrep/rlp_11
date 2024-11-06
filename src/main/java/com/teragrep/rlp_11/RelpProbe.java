@@ -128,6 +128,7 @@ public class RelpProbe {
             try {
                 LOGGER.info("Connecting to <[{}:{}]>", config.getTargetHostname(), config.getTargetPort());
                 connected = relpConnection.connect(config.getTargetHostname(), config.getTargetPort());
+                LOGGER.info("Connected.");
             }
             catch (TimeoutException | IOException e) {
                 LOGGER
@@ -166,6 +167,7 @@ public class RelpProbe {
             LOGGER.warn("Failed to disconnect: <{}>", e.getMessage());
         }
         relpConnection.tearDown();
+        LOGGER.info("Disconnected.");
         connected = false;
     }
 

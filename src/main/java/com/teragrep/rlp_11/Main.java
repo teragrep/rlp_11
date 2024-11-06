@@ -60,13 +60,13 @@ public class Main {
         PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "etc/rlp_11.properties")
         );
-        Map<String, String> map;
+        Map<String, String> map = null;
         try {
             map = pathConfiguration.asMap();
         }
         catch (ConfigurationException e) {
             LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage(), e);
-            return;
+            System.exit(1);
         }
         RelpProbeConfiguration relpProbeConfiguration = new RelpProbeConfiguration(map);
         try {
@@ -74,6 +74,7 @@ public class Main {
         }
         catch (RelpProbeConfigurationError e) {
             LOGGER.error("Failed to validate config: <{}>", e.getMessage(), e);
+            System.exit(1);
         }
 
         RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
