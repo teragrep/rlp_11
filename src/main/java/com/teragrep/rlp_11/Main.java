@@ -97,10 +97,14 @@ public class Main {
             LOGGER.debug("Shutting down.");
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
-        LOGGER.info("Sending events to <[{}:{}]>", targetConfiguration.hostname(), targetConfiguration.port());
         LOGGER
                 .info(
-                        "Using hostname <[{}]> and appname <[{}]> for the events.", recordConfiguration.hostname(),
+                        "Sending records to <[{}:{}]> every <[{}]> milliseconds", targetConfiguration.hostname(),
+                        targetConfiguration.port(), probeConfiguration.interval()
+                );
+        LOGGER
+                .info(
+                        "Using hostname <[{}]> and appname <[{}]> for the records.", recordConfiguration.hostname(),
                         recordConfiguration.appname()
                 );
         relpProbe.start();
