@@ -55,7 +55,7 @@ public final class MetricsConfigurationBuilder {
 
     public static MetricsConfiguration build(final Map<String, String> config) {
         final String name = config.get("metrics.name");
-        final int window = Integer.parseInt(config.get("metrics.window"));
+        final int window = IntConfigurationBuilder.get("metrics.window", config.get("metrics.window"));
         return new MetricsConfiguration(name, window);
     }
 }

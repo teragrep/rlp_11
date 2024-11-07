@@ -45,16 +45,24 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class PrometheusConfigurationBuilder {
+public final class IntConfigurationBuilder {
 
-    private PrometheusConfigurationBuilder() {
+    private static final Logger LOGGER = LoggerFactory.getLogger(IntConfigurationBuilder.class);
+
+    private IntConfigurationBuilder() {
 
     }
 
-    public static PrometheusConfiguration build(final Map<String, String> config) {
-        final int port = IntConfigurationBuilder.get("prometheus.port", config.get("prometheus.port"));
-        return new PrometheusConfiguration(port);
+    public static int get(final String name, final String value) {
+        try {
+            return Integer.parseInt(value);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <{}> received: <{}>", name, e.getMessage());
+            throw new ConfigurationException("Invalid value for <" + name + "> received: <" + e.getMessage() + ">");
+        }
     }
 }

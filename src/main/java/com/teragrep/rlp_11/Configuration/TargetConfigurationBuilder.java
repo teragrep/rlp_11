@@ -45,9 +45,14 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 
 public final class TargetConfigurationBuilder {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TargetConfigurationBuilder.class);
 
     private TargetConfigurationBuilder() {
 
@@ -55,8 +60,9 @@ public final class TargetConfigurationBuilder {
 
     public static TargetConfiguration build(final Map<String, String> config) {
         final String hostname = config.get("target.hostname");
-        final int port = Integer.parseInt(config.get("target.port"));
-        final int reconnectInterval = Integer.parseInt(config.get("target.reconnectinterval"));
+        final int port = IntConfigurationBuilder.get("target.port", config.get("target.port"));
+        final int reconnectInterval = IntConfigurationBuilder
+                .get("target.reconnectinterval", config.get("target.reconnectinterval"));
         return new TargetConfiguration(hostname, port, reconnectInterval);
     }
 }

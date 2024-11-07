@@ -63,27 +63,32 @@ public class TargetConfiguration {
 
     public String hostname() {
         if (hostname == null) {
-            final String errorMessage = "Hostname is null";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER.error("Configuration failure: <target.hostname> is null");
+            throw new ConfigurationException("Invalid value for <target.hostname> received");
         }
         return hostname;
     }
 
     public int port() {
         if (port < 1 || port > 65535) {
-            final String errorMessage = "Port is in invalid range, expected between 1 and 65535";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER
+                    .error(
+                            "Configuration failure: <target.port> <[{}]> is in invalid range, expected between 1 and 65535",
+                            port
+                    );
+            throw new ConfigurationException("Invalid value for <target.port> received");
         }
         return port;
     }
 
     public int reconnectInterval() {
         if (reconnectInterval <= 0) {
-            final String errorMessage = "Reconnect interval too small, expected to be >0";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER
+                    .error(
+                            "Configuration failure: <target.reconnectinterval> <[{}]> too small, expected to be >0",
+                            reconnectInterval
+                    );
+            throw new ConfigurationException("Invalid value for <target.reconnectinterval> received");
         }
         return reconnectInterval;
     }

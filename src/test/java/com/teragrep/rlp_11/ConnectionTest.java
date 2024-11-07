@@ -148,7 +148,7 @@ public class ConnectionTest {
             }
         };
         Timer timer = new Timer("Timer");
-        timer.schedule(task, 10_000);
+        timer.schedule(task, 5_000L);
 
         relpProbe.start();
     }

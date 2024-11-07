@@ -45,16 +45,55 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public final class PrometheusConfigurationBuilder {
+public class PrometheusConfigurationTest {
 
-    private PrometheusConfigurationBuilder() {
-
+    // prometheus.port
+    @Test
+    public void testGoodPort() {
+        Map<String, String> map = baseConfig();
+        PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        Assertions.assertEquals(8080, prometheusConfiguration.port());
     }
 
-    public static PrometheusConfiguration build(final Map<String, String> config) {
-        final int port = IntConfigurationBuilder.get("prometheus.port", config.get("prometheus.port"));
-        return new PrometheusConfiguration(port);
+    @Test
+    public void testNullPort() {
+        Map<String, String> map = baseConfig();
+        map.remove("prometheus.port");
+        Assertions.assertThrowsExactly(ConfigurationException.class, () -> PrometheusConfigurationBuilder.build(map));
+    }
+
+    @Test
+    public void testTooSmallPort() {
+        Map<String, String> map = baseConfig();
+        map.put("prometheus.port", "0");
+        PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, prometheusConfiguration::port);
+    }
+
+    @Test
+    public void testTooHighPort() {
+        Map<String, String> map = baseConfig();
+        map.put("prometheus.port", "65536");
+        PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, prometheusConfiguration::port);
+    }
+
+    @Test
+    public void testNonNumericport() {
+        Map<String, String> map = baseConfig();
+        map.put("prometheus.port", "not a number");
+        Assertions.assertThrowsExactly(ConfigurationException.class, () -> PrometheusConfigurationBuilder.build(map));
+    }
+
+    private Map<String, String> baseConfig() {
+        Map<String, String> map = new HashMap<>();
+        map.put("prometheus.port", "8080");
+        return map;
     }
 }

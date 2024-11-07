@@ -61,18 +61,16 @@ public class MetricsConfiguration {
 
     public String name() {
         if (name == null) {
-            final String errorMessage = "Name is null";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER.error("Configuration failure: <metrics.name> is null");
+            throw new ConfigurationException("Invalid value for <metrics.name> received");
         }
         return name;
     }
 
     public int window() {
         if (window <= 0) {
-            final String errorMessage = "Window too small, expected to be >0";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER.error("Configuration failure: <metrics.window> <[{}]> too small, expected to be >0", window);
+            throw new ConfigurationException("Invalid value for <metrics.name> received");
         }
         return window;
     }

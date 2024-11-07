@@ -51,39 +51,36 @@ import org.slf4j.LoggerFactory;
 public class EventConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventConfiguration.class);
-    private final String appname;
     private final String hostname;
+    private final String appname;
     private final int delay;
 
-    public EventConfiguration(final String appname, final String hostname, final int delay) {
-        this.appname = appname;
+    public EventConfiguration(final String hostname, final String appname, final int delay) {
         this.hostname = hostname;
+        this.appname = appname;
         this.delay = delay;
     }
 
-    public String appname() {
-        if (appname == null) {
-            final String errorMessage = "Appname is null";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
-        }
-        return appname;
-    }
-
     public String hostname() {
-        if (appname == null) {
-            final String errorMessage = "Hostname is null";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+        if (hostname == null) {
+            LOGGER.error("Configuration failure: <event.hostname> is null");
+            throw new ConfigurationException("Invalid value for <event.hostname> received");
         }
         return hostname;
     }
 
+    public String appname() {
+        if (appname == null) {
+            LOGGER.error("Configuration failure: <event.appname> is null");
+            throw new ConfigurationException("Invalid value for <event.appname> received");
+        }
+        return appname;
+    }
+
     public int delay() {
         if (delay <= 0) {
-            final String errorMessage = "Delay too small, expected to be >0";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER.error("Configuration failure: <event.delay> <[{}]> too small, expected to be >0", delay);
+            throw new ConfigurationException("Invalid value for <event.delay> received");
         }
         return delay;
     }

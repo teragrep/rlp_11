@@ -54,9 +54,9 @@ public final class EventConfigurationBuilder {
     }
 
     public static EventConfiguration build(final Map<String, String> config) {
-        final String appname = config.get("event.appname");
         final String hostname = config.get("event.hostname");
-        final int delay = Integer.parseInt(config.get("event.delay"));
-        return new EventConfiguration(appname, hostname, delay);
+        final String appname = config.get("event.appname");
+        final int delay = IntConfigurationBuilder.get("event.delay", config.get("event.delay"));
+        return new EventConfiguration(hostname, appname, delay);
     }
 }

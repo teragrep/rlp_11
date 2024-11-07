@@ -60,9 +60,12 @@ public class PrometheusConfiguration {
 
     public int port() {
         if (port < 1 || port > 65535) {
-            final String errorMessage = "Port is in invalid range, expected between 1 and 65535";
-            LOGGER.error(errorMessage);
-            throw new ConfigurationException(errorMessage);
+            LOGGER
+                    .error(
+                            "Configuration failure: <prometheus.port> <[{}]> is in invalid range, expected between 1 and 65535",
+                            port
+                    );
+            throw new ConfigurationException("Invalid value for <prometheus.port> received");
         }
         return port;
     }
