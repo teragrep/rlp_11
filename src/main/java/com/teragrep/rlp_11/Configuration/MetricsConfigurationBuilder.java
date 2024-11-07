@@ -43,11 +43,19 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_11;
+package com.teragrep.rlp_11.Configuration;
 
-public class RelpProbeConfigurationError extends RuntimeException {
+import java.util.Map;
 
-    public RelpProbeConfigurationError(final String s) {
-        super(s);
+public final class MetricsConfigurationBuilder {
+
+    private MetricsConfigurationBuilder() {
+
+    }
+
+    public static MetricsConfiguration build(final Map<String, String> config) {
+        final String name = config.get("metrics.name");
+        final int window = Integer.parseInt(config.get("metrics.window"));
+        return new MetricsConfiguration(name, window);
     }
 }

@@ -54,6 +54,14 @@ import com.teragrep.net_01.server.ServerFactory;
 import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
 import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
+import com.teragrep.rlp_11.Configuration.EventConfiguration;
+import com.teragrep.rlp_11.Configuration.EventConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
+import com.teragrep.rlp_11.Configuration.MetricsConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
+import com.teragrep.rlp_11.Configuration.PrometheusConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.TargetConfiguration;
+import com.teragrep.rlp_11.Configuration.TargetConfigurationBuilder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +69,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -118,13 +127,19 @@ public class ConnectionTest {
 
     @Test
     public void connectToServerTest() {
-        RelpProbeConfiguration relpProbeConfiguration = Assertions
-                .assertDoesNotThrow(
-                        () -> new RelpProbeConfiguration(
-                                new PathConfiguration("src/test/resources/connectiontest.properties").asMap()
-                        )
-                );
-        RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
+        Map<String, String> map = Assertions
+                .assertDoesNotThrow(() -> new PathConfiguration("src/test/resources/connectiontest.properties").asMap());
+        final PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        final EventConfiguration eventConfiguration = EventConfigurationBuilder.build(map);
+        final TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        final MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
+
+        RelpProbe relpProbe = new RelpProbe(
+                targetConfiguration,
+                eventConfiguration,
+                prometheusConfiguration,
+                metricsConfiguration
+        );
 
         TimerTask task = new TimerTask() {
 

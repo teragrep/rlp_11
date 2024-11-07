@@ -45,8 +45,15 @@
  */
 package com.teragrep.rlp_11;
 
-import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
+import com.teragrep.rlp_11.Configuration.EventConfiguration;
+import com.teragrep.rlp_11.Configuration.EventConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
+import com.teragrep.rlp_11.Configuration.MetricsConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
+import com.teragrep.rlp_11.Configuration.PrometheusConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.TargetConfiguration;
+import com.teragrep.rlp_11.Configuration.TargetConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,43 +63,40 @@ public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static void main(final String[] args) throws ConfigurationException {
+    public static void main(final String[] args) throws com.teragrep.cnf_01.ConfigurationException {
         final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "etc/rlp_11.properties")
         );
-        Map<String, String> map = null;
+        final Map<String, String> map;
         try {
             map = pathConfiguration.asMap();
         }
-        catch (ConfigurationException e) {
+        catch (com.teragrep.cnf_01.ConfigurationException e) {
             LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage());
             throw e;
         }
-        final RelpProbeConfiguration relpProbeConfiguration = new RelpProbeConfiguration(map);
-        try {
-            relpProbeConfiguration.validate();
-        }
-        catch (RelpProbeConfigurationError e) {
-            LOGGER.error("Failed to validate config: <{}>", e.getMessage());
-            throw e;
-        }
+        final PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        final EventConfiguration eventConfiguration = EventConfigurationBuilder.build(map);
+        final TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        final MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
 
-        final RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
+        final RelpProbe relpProbe = new RelpProbe(
+                targetConfiguration,
+                eventConfiguration,
+                prometheusConfiguration,
+                metricsConfiguration
+        );
         final Thread shutdownHook = new Thread(() -> {
             LOGGER.debug("Stopping RelpProbe..");
             relpProbe.stop();
             LOGGER.debug("Shutting down.");
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+        LOGGER.info("Sending events to <[{}:{}]>", targetConfiguration.hostname(), targetConfiguration.port());
         LOGGER
                 .info(
-                        "Sending events to <[{}:{}]>", relpProbeConfiguration.getTargetHostname(),
-                        relpProbeConfiguration.getTargetPort()
-                );
-        LOGGER
-                .info(
-                        "Using hostname <[{}]> and appname <[{}]> for the events.",
-                        relpProbeConfiguration.getEventHostname(), relpProbeConfiguration.getEventAppname()
+                        "Using hostname <[{}]> and appname <[{}]> for the events.", eventConfiguration.hostname(),
+                        eventConfiguration.appname()
                 );
         relpProbe.start();
     }

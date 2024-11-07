@@ -45,7 +45,10 @@
  */
 package com.teragrep.rlp_11;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
+import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.jmx.JmxReporter;
 import com.teragrep.rlo_14.Facility;
@@ -53,6 +56,10 @@ import com.teragrep.rlo_14.Severity;
 import com.teragrep.rlo_14.SyslogMessage;
 import com.teragrep.rlp_01.RelpBatch;
 import com.teragrep.rlp_01.RelpConnection;
+import com.teragrep.rlp_11.Configuration.EventConfiguration;
+import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
+import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
+import com.teragrep.rlp_11.Configuration.TargetConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,47 +78,44 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 
+import static com.codahale.metrics.MetricRegistry.name;
+
 public class RelpProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
-    private final RelpProbeConfiguration config;
-    private AtomicBoolean stayRunning = new AtomicBoolean(true);
+    private final TargetConfiguration targetConfiguration;
+    private final EventConfiguration eventConfiguration;
+    private final PrometheusConfiguration prometheusConfiguration;
+    private final MetricsConfiguration metricsConfiguration;
+    private final AtomicBoolean stayRunning = new AtomicBoolean(true);
     private RelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
     private boolean connected = false;
-    public final Metrics metrics;
-    private final JmxReporter jmxReporter;
-    private final Slf4jReporter slf4jReporter;
-    private final Server jettyServer;
-
-    public RelpProbe(final RelpProbeConfiguration config) {
-        this(config, new Metrics(config.getTargetHostname() + ":" + config.getTargetPort()));
-    }
-
-    public RelpProbe(final RelpProbeConfiguration config, final Metrics metrics) {
-        this(
-                config,
-                metrics,
-                JmxReporter.forRegistry(metrics.metricRegistry).build(),
-                Slf4jReporter.forRegistry(metrics.metricRegistry).outputTo(LoggerFactory.getLogger(RelpProbe.class)).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build(), new Server(config.getPrometheusPort())
-        );
-    }
+    private Counter records;
+    private Counter resends;
+    private Counter connects;
+    private Counter disconnects;
+    private Counter retriedConnects;
+    private Timer sendLatency;
+    private Timer connectLatency;
+    private JmxReporter jmxReporter;
+    private Slf4jReporter slf4jReporter;
+    private Server jettyServer;
 
     public RelpProbe(
-            final RelpProbeConfiguration config,
-            final Metrics metrics,
-            JmxReporter jmxReporter,
-            Slf4jReporter slf4jReporter,
-            Server jettyServer
+            final TargetConfiguration targetConfiguration,
+            final EventConfiguration eventConfiguration,
+            final PrometheusConfiguration prometheusConfiguration,
+            final MetricsConfiguration metricsConfiguration
     ) {
-        this.config = config;
-        this.metrics = metrics;
-        this.jmxReporter = jmxReporter;
-        this.slf4jReporter = slf4jReporter;
-        this.jettyServer = jettyServer;
+        this.targetConfiguration = targetConfiguration;
+        this.eventConfiguration = eventConfiguration;
+        this.prometheusConfiguration = prometheusConfiguration;
+        this.metricsConfiguration = metricsConfiguration;
     }
 
     public void start() {
+        createMetrics(metricsConfiguration.name());
         this.jmxReporter.start();
         this.slf4jReporter.start(1, TimeUnit.MINUTES);
         String origin;
@@ -124,32 +128,16 @@ public class RelpProbe {
         }
         relpConnection = new RelpConnection();
         connect();
-        final int eventDelay = config.getEventDelay();
         while (stayRunning.get()) {
             final RelpBatch relpBatch = new RelpBatch();
-            final Instant timestamp = Instant.now();
-            final JsonObject event = Json
-                    .createObjectBuilder()
-                    .add("origin", origin)
-                    .add("timestamp", timestamp.getEpochSecond() + "." + timestamp.getNano())
-                    .build();
-            final byte[] record = new SyslogMessage()
-                    .withTimestamp(timestamp.toEpochMilli())
-                    .withAppName(config.getEventAppname())
-                    .withHostname(config.getEventHostname())
-                    .withFacility(Facility.USER)
-                    .withSeverity(Severity.INFORMATIONAL)
-                    .withMsg(event.toString())
-                    .toRfc5424SyslogMessage()
-                    .getBytes(StandardCharsets.UTF_8);
-            relpBatch.insert(record);
+            relpBatch.insert(createPayload(origin));
 
             boolean allSent = false;
             while (!allSent && stayRunning.get()) {
-                try (final Timer.Context context = metrics.sendLatency.time()) {
+                try (final Timer.Context context = sendLatency.time()) {
                     LOGGER.debug("Committing Relpbatch");
                     relpConnection.commit(relpBatch);
-                    metrics.records.inc();
+                    records.inc();
                 }
                 catch (IllegalStateException | IOException | java.util.concurrent.TimeoutException e) {
                     LOGGER.warn("Failed to commit: <{}>", e.getMessage());
@@ -160,14 +148,14 @@ public class RelpProbe {
                 allSent = relpBatch.verifyTransactionAll();
                 if (!allSent) {
                     LOGGER.warn("Transactions failed, retrying");
-                    metrics.resends.inc();
+                    resends.inc();
                     relpBatch.retryAllFailed();
                     reconnect();
                 }
             }
             try {
                 LOGGER.debug("Sleeping before sending next event");
-                Thread.sleep(eventDelay);
+                Thread.sleep(eventConfiguration.delay());
             }
             catch (InterruptedException e) {
                 LOGGER.warn("Sleep interrupted: <{}>", e.getMessage());
@@ -175,38 +163,29 @@ public class RelpProbe {
         }
         disconnect();
         latch.countDown();
-        slf4jReporter.close();
-        jmxReporter.close();
-        try {
-            jettyServer.stop();
-        }
-        //CHECKSTYLE:OFF
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        //CHECKSTYLE:ON
+        teardownMetrics();
     }
 
     private void connect() {
         while (!connected && stayRunning.get()) {
-            try (final Timer.Context context = metrics.connectLatency.time()) {
-                LOGGER.debug("Connecting to <[{}:{}]>", config.getTargetHostname(), config.getTargetPort());
-                connected = relpConnection.connect(config.getTargetHostname(), config.getTargetPort());
+            try (final Timer.Context context = connectLatency.time()) {
+                LOGGER.debug("Connecting to <[{}:{}]>", targetConfiguration.hostname(), targetConfiguration.port());
+                connected = relpConnection.connect(targetConfiguration.hostname(), targetConfiguration.port());
                 LOGGER.debug("Connected.");
-                metrics.connects.inc();
+                connects.inc();
             }
             catch (TimeoutException | IOException e) {
                 LOGGER
                         .warn(
-                                "Failed to connect to <[{}:{}]>: <{}>", config.getTargetHostname(),
-                                config.getTargetPort(), e.getMessage()
+                                "Failed to connect to <[{}:{}]>: <{}>", targetConfiguration.hostname(),
+                                targetConfiguration.port(), e.getMessage()
                         );
             }
             if (!connected) {
                 try {
-                    LOGGER.debug("Sleeping for <[{}]>ms before reconnecting", config.getReconnectInterval());
-                    Thread.sleep(config.getReconnectInterval());
-                    metrics.retriedConnects.inc();
+                    LOGGER.debug("Sleeping for <[{}]>ms before reconnecting", targetConfiguration.reconnectInterval());
+                    Thread.sleep(targetConfiguration.reconnectInterval());
+                    retriedConnects.inc();
                 }
                 catch (InterruptedException e) {
                     LOGGER.warn("Sleep was interrupted: <{}>", e.getMessage());
@@ -228,7 +207,7 @@ public class RelpProbe {
         try {
             LOGGER.debug("Disconnecting..");
             relpConnection.disconnect();
-            metrics.disconnects.inc();
+            disconnects.inc();
         }
         catch (IOException | TimeoutException e) {
             LOGGER.warn("Failed to disconnect: <{}>", e.getMessage());
@@ -252,5 +231,56 @@ public class RelpProbe {
             throw new RuntimeException(e);
         }
         LOGGER.debug("RelpProbe stopped.");
+    }
+
+    private byte[] createPayload(final String origin) {
+        final Instant timestamp = Instant.now();
+        final JsonObject event = Json
+                .createObjectBuilder()
+                .add("origin", origin)
+                .add("timestamp", timestamp.getEpochSecond() + "." + timestamp.getNano())
+                .build();
+        return new SyslogMessage()
+                .withTimestamp(timestamp.toEpochMilli())
+                .withAppName(eventConfiguration.appname())
+                .withHostname(eventConfiguration.hostname())
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(event.toString())
+                .toRfc5424SyslogMessage()
+                .getBytes(StandardCharsets.UTF_8);
+    }
+
+    private void createMetrics(final String name) {
+        final MetricRegistry metricRegistry = new MetricRegistry();
+        this.records = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "records"));
+        this.resends = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "resends"));
+        this.connects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "connects"));
+        this.disconnects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "disconnects"));
+        this.retriedConnects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "retriedConnects"));
+        // TODO: Configurable window?
+        this.sendLatency = metricRegistry
+                .timer(name(RelpProbe.class, "<[" + name + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
+        this.connectLatency = metricRegistry
+                .timer(name(RelpProbe.class, "<[" + name + "]>", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
+        jmxReporter = JmxReporter.forRegistry(metricRegistry).build();
+        slf4jReporter = Slf4jReporter
+                .forRegistry(metricRegistry)
+                .outputTo(LoggerFactory.getLogger(RelpProbe.class))
+                .build();
+        jettyServer = new Server(prometheusConfiguration.port());
+    }
+
+    private void teardownMetrics() {
+        slf4jReporter.close();
+        jmxReporter.close();
+        try {
+            jettyServer.stop();
+        }
+        //CHECKSTYLE:OFF
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        //CHECKSTYLE:ON
     }
 }

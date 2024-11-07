@@ -43,37 +43,27 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_11;
+package com.teragrep.rlp_11.Configuration;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SlidingWindowReservoir;
-import com.codahale.metrics.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static com.codahale.metrics.MetricRegistry.name;
+public class PrometheusConfiguration {
 
-public class Metrics {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsConfiguration.class);
 
-    public final Counter records;
-    public final Counter resends;
-    public final Counter connects;
-    public final Counter disconnects;
-    public final Counter retriedConnects;
-    public final Timer sendLatency;
-    public final Timer connectLatency;
-    public final MetricRegistry metricRegistry;
+    private final int port;
 
-    public Metrics(final String name) {
-        this.metricRegistry = new MetricRegistry();
-        this.records = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "records"));
-        this.resends = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "resends"));
-        this.connects = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "connects"));
-        this.disconnects = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "disconnects"));
-        this.retriedConnects = metricRegistry.counter(name(Metrics.class, "<[" + name + "]>", "retriedConnects"));
-        // TODO: Configurable window?
-        this.sendLatency = metricRegistry
-                .timer(name(Metrics.class, "<[" + name + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(10000)));
-        this.connectLatency = metricRegistry
-                .timer(name(Metrics.class, "<[" + name + "]>", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(10000)));
+    public PrometheusConfiguration(final int port) {
+        this.port = port;
+    }
+
+    public int port() {
+        if (port < 1 || port > 65535) {
+            final String errorMessage = "Port is in invalid range, expected between 1 and 65535";
+            LOGGER.error(errorMessage);
+            throw new ConfigurationException(errorMessage);
+        }
+        return port;
     }
 }
