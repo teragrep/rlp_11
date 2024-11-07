@@ -56,7 +56,7 @@ public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws ConfigurationException {
         final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "etc/rlp_11.properties")
         );
@@ -65,23 +65,23 @@ public class Main {
             map = pathConfiguration.asMap();
         }
         catch (ConfigurationException e) {
-            LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage(), e);
-            System.exit(1);
+            LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage());
+            throw e;
         }
         final RelpProbeConfiguration relpProbeConfiguration = new RelpProbeConfiguration(map);
         try {
             relpProbeConfiguration.validate();
         }
         catch (RelpProbeConfigurationError e) {
-            LOGGER.error("Failed to validate config: <{}>", e.getMessage(), e);
-            System.exit(1);
+            LOGGER.error("Failed to validate config: <{}>", e.getMessage());
+            throw e;
         }
 
         final RelpProbe relpProbe = new RelpProbe(relpProbeConfiguration);
         final Thread shutdownHook = new Thread(() -> {
-            LOGGER.info("Stopping RelpProbe..");
+            LOGGER.debug("Stopping RelpProbe..");
             relpProbe.stop();
-            LOGGER.info("Shutting down.");
+            LOGGER.debug("Shutting down.");
         });
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         LOGGER

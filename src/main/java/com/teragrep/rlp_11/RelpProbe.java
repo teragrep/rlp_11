@@ -66,6 +66,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
 
@@ -73,7 +75,7 @@ public class RelpProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
     private final RelpProbeConfiguration config;
-    private boolean stayRunning = true;
+    private AtomicBoolean stayRunning = new AtomicBoolean(true);
     private RelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
     private boolean connected = false;
@@ -123,7 +125,7 @@ public class RelpProbe {
         relpConnection = new RelpConnection();
         connect();
         final int eventDelay = config.getEventDelay();
-        while (stayRunning) {
+        while (stayRunning.get()) {
             final RelpBatch relpBatch = new RelpBatch();
             final Instant timestamp = Instant.now();
             final JsonObject event = Json
@@ -143,7 +145,7 @@ public class RelpProbe {
             relpBatch.insert(record);
 
             boolean allSent = false;
-            while (!allSent && stayRunning) {
+            while (!allSent && stayRunning.get()) {
                 try (final Timer.Context context = metrics.sendLatency.time()) {
                     LOGGER.debug("Committing Relpbatch");
                     relpConnection.commit(relpBatch);
@@ -186,11 +188,11 @@ public class RelpProbe {
     }
 
     private void connect() {
-        while (!connected && stayRunning) {
+        while (!connected && stayRunning.get()) {
             try (final Timer.Context context = metrics.connectLatency.time()) {
-                LOGGER.info("Connecting to <[{}:{}]>", config.getTargetHostname(), config.getTargetPort());
+                LOGGER.debug("Connecting to <[{}:{}]>", config.getTargetHostname(), config.getTargetPort());
                 connected = relpConnection.connect(config.getTargetHostname(), config.getTargetPort());
-                LOGGER.info("Connected.");
+                LOGGER.debug("Connected.");
                 metrics.connects.inc();
             }
             catch (TimeoutException | IOException e) {
@@ -202,7 +204,7 @@ public class RelpProbe {
             }
             if (!connected) {
                 try {
-                    LOGGER.info("Sleeping for <[{}]>ms before reconnecting", config.getReconnectInterval());
+                    LOGGER.debug("Sleeping for <[{}]>ms before reconnecting", config.getReconnectInterval());
                     Thread.sleep(config.getReconnectInterval());
                     metrics.retriedConnects.inc();
                 }
@@ -224,7 +226,7 @@ public class RelpProbe {
             return;
         }
         try {
-            LOGGER.info("Disconnecting..");
+            LOGGER.debug("Disconnecting..");
             relpConnection.disconnect();
             metrics.disconnects.inc();
         }
@@ -232,13 +234,13 @@ public class RelpProbe {
             LOGGER.warn("Failed to disconnect: <{}>", e.getMessage());
         }
         relpConnection.tearDown();
-        LOGGER.info("Disconnected.");
+        LOGGER.debug("Disconnected.");
         connected = false;
     }
 
     public void stop() {
         LOGGER.debug("Stop called");
-        stayRunning = false;
+        stayRunning.set(false);
         try {
             if (!latch.await(5L, TimeUnit.SECONDS)) {
                 LOGGER.error("Timed out while waiting for probe to shutdown.");
@@ -249,6 +251,6 @@ public class RelpProbe {
             LOGGER.error("Interrupted while waiting for latch countdown");
             throw new RuntimeException(e);
         }
-        LOGGER.info("RelpProbe stopped.");
+        LOGGER.debug("RelpProbe stopped.");
     }
 }

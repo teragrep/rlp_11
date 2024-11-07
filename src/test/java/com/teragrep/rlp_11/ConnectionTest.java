@@ -133,7 +133,7 @@ public class ConnectionTest {
             }
         };
         Timer timer = new Timer("Timer");
-        timer.schedule(task, 10000L);
+        timer.schedule(task, 10_000);
 
         relpProbe.start();
     }
