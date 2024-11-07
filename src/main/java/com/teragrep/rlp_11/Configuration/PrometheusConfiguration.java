@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 public class PrometheusConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusConfiguration.class);
 
     private final int port;
 

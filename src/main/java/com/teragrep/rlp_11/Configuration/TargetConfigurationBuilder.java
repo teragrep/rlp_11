@@ -45,14 +45,9 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 
 public final class TargetConfigurationBuilder {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TargetConfigurationBuilder.class);
 
     private TargetConfigurationBuilder() {
 
