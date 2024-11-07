@@ -178,9 +178,11 @@ public class RelpProbe {
         try {
             jettyServer.stop();
         }
+        //CHECKSTYLE:OFF
         catch (Exception e) {
             throw new RuntimeException(e);
         }
+        //CHECKSTYLE:ON
     }
 
     private void connect() {
