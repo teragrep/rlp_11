@@ -57,7 +57,7 @@ public class PrometheusConfigurationTest {
     @Test
     public void testGoodPort() {
         Map<String, String> map = baseConfig();
-        PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
         Assertions.assertEquals(8080, prometheusConfiguration.port());
     }
 
@@ -65,14 +65,15 @@ public class PrometheusConfigurationTest {
     public void testNullPort() {
         Map<String, String> map = baseConfig();
         map.remove("prometheus.port");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> PrometheusConfigurationBuilder.build(map));
+        PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, prometheusConfiguration::port);
     }
 
     @Test
     public void testTooSmallPort() {
         Map<String, String> map = baseConfig();
         map.put("prometheus.port", "0");
-        PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, prometheusConfiguration::port);
     }
 
@@ -80,15 +81,16 @@ public class PrometheusConfigurationTest {
     public void testTooHighPort() {
         Map<String, String> map = baseConfig();
         map.put("prometheus.port", "65536");
-        PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
+        PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, prometheusConfiguration::port);
     }
 
     @Test
-    public void testNonNumericport() {
+    public void testNonNumericPort() {
         Map<String, String> map = baseConfig();
         map.put("prometheus.port", "not a number");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> PrometheusConfigurationBuilder.build(map));
+        PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
+        Assertions.assertThrowsExactly(NumberFormatException.class, prometheusConfiguration::port);
     }
 
     private Map<String, String> baseConfig() {

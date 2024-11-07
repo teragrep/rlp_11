@@ -43,26 +43,45 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.rlp_11.Configuration;
+package com.teragrep.rlp_11;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.teragrep.rlo_14.Facility;
+import com.teragrep.rlo_14.Severity;
+import com.teragrep.rlo_14.SyslogMessage;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 
-public final class IntConfigurationBuilder {
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IntConfigurationBuilder.class);
+public class RecordFactory {
 
-    private IntConfigurationBuilder() {
+    private final String origin;
+    private final String hostname;
+    private final String appname;
 
+    public RecordFactory(final String origin, final String hostname, final String appname) {
+        this.origin = origin;
+        this.hostname = hostname;
+        this.appname = appname;
     }
 
-    public static int get(final String name, final String value) {
-        try {
-            return Integer.parseInt(value);
-        }
-        catch (NumberFormatException e) {
-            LOGGER.error("Configuration failure: Invalid value for <{}> received: <{}>", name, e.getMessage());
-            throw new ConfigurationException("Invalid value for <" + name + "> received: <" + e.getMessage() + ">");
-        }
+    public byte[] createRecord() {
+        final Instant timestamp = Instant.now();
+        final String timestampString = timestamp.getEpochSecond() + "." + timestamp.getNano();
+        final JsonObject event = Json
+                .createObjectBuilder()
+                .add("origin", origin)
+                .add("timestamp", timestampString)
+                .build();
+        return new SyslogMessage()
+                .withTimestamp(timestamp.toEpochMilli())
+                .withAppName(appname)
+                .withHostname(hostname)
+                .withFacility(Facility.USER)
+                .withSeverity(Severity.INFORMATIONAL)
+                .withMsg(event.toString())
+                .toRfc5424SyslogMessage()
+                .getBytes(StandardCharsets.UTF_8);
     }
 }

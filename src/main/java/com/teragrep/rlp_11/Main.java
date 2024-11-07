@@ -46,17 +46,16 @@
 package com.teragrep.rlp_11;
 
 import com.teragrep.cnf_01.PathConfiguration;
-import com.teragrep.rlp_11.Configuration.EventConfiguration;
-import com.teragrep.rlp_11.Configuration.EventConfigurationBuilder;
+import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
+import com.teragrep.rlp_11.Configuration.RecordConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
-import com.teragrep.rlp_11.Configuration.MetricsConfigurationBuilder;
 import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
-import com.teragrep.rlp_11.Configuration.PrometheusConfigurationBuilder;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
-import com.teragrep.rlp_11.Configuration.TargetConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 
 public class Main {
@@ -75,16 +74,22 @@ public class Main {
             LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage());
             throw e;
         }
-        final PrometheusConfiguration prometheusConfiguration = PrometheusConfigurationBuilder.build(map);
-        final EventConfiguration eventConfiguration = EventConfigurationBuilder.build(map);
-        final TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
-        final MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
-
+        final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
+        final RecordConfiguration recordConfiguration = new RecordConfiguration(map);
+        final TargetConfiguration targetConfiguration = new TargetConfiguration(map);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        final RecordFactory recordFactory = new RecordFactory(
+                getHostname(),
+                recordConfiguration.hostname(),
+                recordConfiguration.appname()
+        );
+        final ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
         final RelpProbe relpProbe = new RelpProbe(
                 targetConfiguration,
-                eventConfiguration,
+                probeConfiguration,
                 prometheusConfiguration,
-                metricsConfiguration
+                metricsConfiguration,
+                recordFactory
         );
         final Thread shutdownHook = new Thread(() -> {
             LOGGER.debug("Stopping RelpProbe..");
@@ -95,9 +100,21 @@ public class Main {
         LOGGER.info("Sending events to <[{}:{}]>", targetConfiguration.hostname(), targetConfiguration.port());
         LOGGER
                 .info(
-                        "Using hostname <[{}]> and appname <[{}]> for the events.", eventConfiguration.hostname(),
-                        eventConfiguration.appname()
+                        "Using hostname <[{}]> and appname <[{}]> for the events.", recordConfiguration.hostname(),
+                        recordConfiguration.appname()
                 );
         relpProbe.start();
+    }
+
+    private static String getHostname() {
+        String origin;
+        try {
+            origin = InetAddress.getLocalHost().getHostName();
+        }
+        catch (UnknownHostException e) {
+            origin = "localhost";
+            LOGGER.warn("Could not get hostname, using <{}> instead", origin);
+        }
+        return origin;
     }
 }

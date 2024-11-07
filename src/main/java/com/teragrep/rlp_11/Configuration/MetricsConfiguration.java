@@ -48,18 +48,19 @@ package com.teragrep.rlp_11.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 public class MetricsConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsConfiguration.class);
-    private final String name;
-    private final int window;
+    private final Map<String, String> config;
 
-    public MetricsConfiguration(final String name, final int window) {
-        this.name = name;
-        this.window = window;
+    public MetricsConfiguration(final Map<String, String> config) {
+        this.config = config;
     }
 
     public String name() {
+        final String name = config.get("metrics.name");
         if (name == null) {
             LOGGER.error("Configuration failure: <metrics.name> is null");
             throw new ConfigurationException("Invalid value for <metrics.name> received");
@@ -68,6 +69,19 @@ public class MetricsConfiguration {
     }
 
     public int window() {
+        final String windowString = config.get("metrics.window");
+        if (windowString == null) {
+            LOGGER.error("Configuration failure: <metrics.window> is null");
+            throw new ConfigurationException("Invalid value for <metrics.window> received");
+        }
+        final int window;
+        try {
+            window = Integer.parseInt(windowString);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <metrics.window>: <{}>", e.getMessage());
+            throw e;
+        }
         if (window <= 0) {
             LOGGER.error("Configuration failure: <metrics.window> <[{}]> too small, expected to be >0", window);
             throw new ConfigurationException("Invalid value for <metrics.name> received");

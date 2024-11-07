@@ -51,12 +51,9 @@ import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.jmx.JmxReporter;
-import com.teragrep.rlo_14.Facility;
-import com.teragrep.rlo_14.Severity;
-import com.teragrep.rlo_14.SyslogMessage;
 import com.teragrep.rlp_01.RelpBatch;
 import com.teragrep.rlp_01.RelpConnection;
-import com.teragrep.rlp_11.Configuration.EventConfiguration;
+import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
 import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
@@ -65,18 +62,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.CountDownLatch;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
 
 import static com.codahale.metrics.MetricRegistry.name;
 
@@ -84,9 +74,10 @@ public class RelpProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
     private final TargetConfiguration targetConfiguration;
-    private final EventConfiguration eventConfiguration;
+    private final RecordFactory recordFactory;
     private final PrometheusConfiguration prometheusConfiguration;
     private final MetricsConfiguration metricsConfiguration;
+    private final ProbeConfiguration probeConfiguration;
     private final AtomicBoolean stayRunning = new AtomicBoolean(true);
     private RelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -104,12 +95,14 @@ public class RelpProbe {
 
     public RelpProbe(
             final TargetConfiguration targetConfiguration,
-            final EventConfiguration eventConfiguration,
+            final ProbeConfiguration probeConfiguration,
             final PrometheusConfiguration prometheusConfiguration,
-            final MetricsConfiguration metricsConfiguration
+            final MetricsConfiguration metricsConfiguration,
+            final RecordFactory recordFactory
     ) {
         this.targetConfiguration = targetConfiguration;
-        this.eventConfiguration = eventConfiguration;
+        this.probeConfiguration = probeConfiguration;
+        this.recordFactory = recordFactory;
         this.prometheusConfiguration = prometheusConfiguration;
         this.metricsConfiguration = metricsConfiguration;
     }
@@ -118,19 +111,11 @@ public class RelpProbe {
         createMetrics(metricsConfiguration.name());
         this.jmxReporter.start();
         this.slf4jReporter.start(1, TimeUnit.MINUTES);
-        String origin;
-        try {
-            origin = InetAddress.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException e) {
-            origin = "localhost";
-            LOGGER.warn("Could not get hostname, using <{}> instead", origin);
-        }
         relpConnection = new RelpConnection();
         connect();
         while (stayRunning.get()) {
             final RelpBatch relpBatch = new RelpBatch();
-            relpBatch.insert(createPayload(origin));
+            relpBatch.insert(recordFactory.createRecord());
 
             boolean allSent = false;
             while (!allSent && stayRunning.get()) {
@@ -155,7 +140,7 @@ public class RelpProbe {
             }
             try {
                 LOGGER.debug("Sleeping before sending next event");
-                Thread.sleep(eventConfiguration.delay());
+                Thread.sleep(probeConfiguration.interval());
             }
             catch (InterruptedException e) {
                 LOGGER.warn("Sleep interrupted: <{}>", e.getMessage());
@@ -233,24 +218,6 @@ public class RelpProbe {
         LOGGER.debug("RelpProbe stopped.");
     }
 
-    private byte[] createPayload(final String origin) {
-        final Instant timestamp = Instant.now();
-        final JsonObject event = Json
-                .createObjectBuilder()
-                .add("origin", origin)
-                .add("timestamp", timestamp.getEpochSecond() + "." + timestamp.getNano())
-                .build();
-        return new SyslogMessage()
-                .withTimestamp(timestamp.toEpochMilli())
-                .withAppName(eventConfiguration.appname())
-                .withHostname(eventConfiguration.hostname())
-                .withFacility(Facility.USER)
-                .withSeverity(Severity.INFORMATIONAL)
-                .withMsg(event.toString())
-                .toRfc5424SyslogMessage()
-                .getBytes(StandardCharsets.UTF_8);
-    }
-
     private void createMetrics(final String name) {
         final MetricRegistry metricRegistry = new MetricRegistry();
         this.records = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "records"));
@@ -258,7 +225,6 @@ public class RelpProbe {
         this.connects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "connects"));
         this.disconnects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "disconnects"));
         this.retriedConnects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "retriedConnects"));
-        // TODO: Configurable window?
         this.sendLatency = metricRegistry
                 .timer(name(RelpProbe.class, "<[" + name + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
         this.connectLatency = metricRegistry
@@ -272,8 +238,8 @@ public class RelpProbe {
     }
 
     private void teardownMetrics() {
-        slf4jReporter.close();
         jmxReporter.close();
+        slf4jReporter.close();
         try {
             jettyServer.stop();
         }

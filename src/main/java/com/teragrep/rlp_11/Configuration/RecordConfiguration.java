@@ -48,40 +48,32 @@ package com.teragrep.rlp_11.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class EventConfiguration {
+import java.util.Map;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventConfiguration.class);
-    private final String hostname;
-    private final String appname;
-    private final int delay;
+public class RecordConfiguration {
 
-    public EventConfiguration(final String hostname, final String appname, final int delay) {
-        this.hostname = hostname;
-        this.appname = appname;
-        this.delay = delay;
+    private static final Logger LOGGER = LoggerFactory.getLogger(RecordConfiguration.class);
+    private final Map<String, String> config;
+
+    public RecordConfiguration(final Map<String, String> config) {
+        this.config = config;
     }
 
     public String hostname() {
+        final String hostname = config.get("record.hostname");
         if (hostname == null) {
-            LOGGER.error("Configuration failure: <event.hostname> is null");
-            throw new ConfigurationException("Invalid value for <event.hostname> received");
+            LOGGER.error("Configuration failure: <record.hostname> is null");
+            throw new ConfigurationException("Invalid value for <record.hostname> received");
         }
         return hostname;
     }
 
     public String appname() {
+        final String appname = config.get("record.appname");
         if (appname == null) {
-            LOGGER.error("Configuration failure: <event.appname> is null");
-            throw new ConfigurationException("Invalid value for <event.appname> received");
+            LOGGER.error("Configuration failure: <record.appname> is null");
+            throw new ConfigurationException("Invalid value for <record.appname> received");
         }
         return appname;
-    }
-
-    public int delay() {
-        if (delay <= 0) {
-            LOGGER.error("Configuration failure: <event.delay> <[{}]> too small, expected to be >0", delay);
-            throw new ConfigurationException("Invalid value for <event.delay> received");
-        }
-        return delay;
     }
 }

@@ -45,16 +45,38 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Map;
 
-public final class PrometheusConfigurationBuilder {
+public class ProbeConfiguration {
 
-    private PrometheusConfigurationBuilder() {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProbeConfiguration.class);
+    private final Map<String, String> config;
 
+    public ProbeConfiguration(final Map<String, String> config) {
+        this.config = config;
     }
 
-    public static PrometheusConfiguration build(final Map<String, String> config) {
-        final int port = IntConfigurationBuilder.get("prometheus.port", config.get("prometheus.port"));
-        return new PrometheusConfiguration(port);
+    public int interval() {
+        final String intervalString = config.get("probe.interval");
+        if (intervalString == null) {
+            LOGGER.error("Configuration failure: <probe.interval> is null");
+            throw new ConfigurationException("Invalid value for <probe.interval> received");
+        }
+        final int interval;
+        try {
+            interval = Integer.parseInt(intervalString);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <probe.interval>: <{}>", e.getMessage());
+            throw e;
+        }
+        if (interval <= 0) {
+            LOGGER.error("Configuration failure: <probe.interval> <[{}]> too small, expected to be >0", interval);
+            throw new ConfigurationException("Invalid value for <probe.interval> received");
+        }
+        return interval;
     }
 }

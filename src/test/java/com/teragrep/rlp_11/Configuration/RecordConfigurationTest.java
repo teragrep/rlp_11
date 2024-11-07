@@ -45,17 +45,50 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public final class MetricsConfigurationBuilder {
+public class RecordConfigurationTest {
 
-    private MetricsConfigurationBuilder() {
-
+    // event.hostname
+    @Test
+    public void testNonNullHostname() {
+        Map<String, String> map = baseConfig();
+        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
+        Assertions.assertEquals("my-hostname", eventConfiguration.hostname());
     }
 
-    public static MetricsConfiguration build(final Map<String, String> config) {
-        final String name = config.get("metrics.name");
-        final int window = IntConfigurationBuilder.get("metrics.window", config.get("metrics.window"));
-        return new MetricsConfiguration(name, window);
+    @Test
+    public void testNullHostname() {
+        Map<String, String> map = baseConfig();
+        map.remove("record.hostname");
+        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, eventConfiguration::hostname);
+    }
+
+    // event.appname
+    @Test
+    public void testNonNullAppname() {
+        Map<String, String> map = baseConfig();
+        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
+        Assertions.assertEquals("my-appname", eventConfiguration.appname());
+    }
+
+    @Test
+    public void testNullAppname() {
+        Map<String, String> map = baseConfig();
+        map.remove("record.appname");
+        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, eventConfiguration::appname);
+    }
+
+    private Map<String, String> baseConfig() {
+        Map<String, String> map = new HashMap<>();
+        map.put("record.hostname", "my-hostname");
+        map.put("record.appname", "my-appname");
+        return map;
     }
 }

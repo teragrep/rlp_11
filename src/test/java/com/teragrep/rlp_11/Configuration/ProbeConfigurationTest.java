@@ -45,18 +45,49 @@
  */
 package com.teragrep.rlp_11.Configuration;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
 import java.util.Map;
 
-public final class EventConfigurationBuilder {
+public class ProbeConfigurationTest {
 
-    private EventConfigurationBuilder() {
-
+    // probe.interval
+    @Test
+    public void testGoodInterval() {
+        Map<String, String> map = baseConfig();
+        ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
+        Assertions.assertEquals(12500, probeConfiguration.interval());
     }
 
-    public static EventConfiguration build(final Map<String, String> config) {
-        final String hostname = config.get("event.hostname");
-        final String appname = config.get("event.appname");
-        final int delay = IntConfigurationBuilder.get("event.delay", config.get("event.delay"));
-        return new EventConfiguration(hostname, appname, delay);
+    @Test
+    public void testNullInterval() {
+        Map<String, String> map = baseConfig();
+        map.remove("probe.interval");
+        ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, probeConfiguration::interval);
+    }
+
+    @Test
+    public void testTooSmallInterval() {
+        Map<String, String> map = baseConfig();
+        map.put("probe.interval", "0");
+        ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, probeConfiguration::interval);
+    }
+
+    @Test
+    public void testNonNumericInterval() {
+        Map<String, String> map = baseConfig();
+        map.put("probe.interval", "not a number");
+        ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
+        Assertions.assertThrowsExactly(NumberFormatException.class, probeConfiguration::interval);
+    }
+
+    private Map<String, String> baseConfig() {
+        Map<String, String> map = new HashMap<>();
+        map.put("probe.interval", "12500");
+        return map;
     }
 }

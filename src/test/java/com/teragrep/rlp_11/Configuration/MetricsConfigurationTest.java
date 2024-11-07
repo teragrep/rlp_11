@@ -57,7 +57,7 @@ public class MetricsConfigurationTest {
     @Test
     public void testNonNullName() {
         Map<String, String> map = baseConfig();
-        MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
         Assertions.assertEquals("target-name", metricsConfiguration.name());
     }
 
@@ -65,7 +65,7 @@ public class MetricsConfigurationTest {
     public void testNullName() {
         Map<String, String> map = baseConfig();
         map.remove("metrics.name");
-        MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, metricsConfiguration::name);
     }
 
@@ -73,7 +73,7 @@ public class MetricsConfigurationTest {
     @Test
     public void testGoodWindow() {
         Map<String, String> map = baseConfig();
-        MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
         Assertions.assertEquals(1337, metricsConfiguration.window());
     }
 
@@ -81,14 +81,15 @@ public class MetricsConfigurationTest {
     public void testNullWindow() {
         Map<String, String> map = baseConfig();
         map.remove("metrics.window");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> MetricsConfigurationBuilder.build(map));
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, metricsConfiguration::window);
     }
 
     @Test
     public void testTooSmallWindow() {
         Map<String, String> map = baseConfig();
         map.put("metrics.window", "0");
-        MetricsConfiguration metricsConfiguration = MetricsConfigurationBuilder.build(map);
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, metricsConfiguration::window);
     }
 
@@ -96,7 +97,8 @@ public class MetricsConfigurationTest {
     public void testNonNumericWindow() {
         Map<String, String> map = baseConfig();
         map.put("metrics.window", "Not a number here");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> MetricsConfigurationBuilder.build(map));
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        Assertions.assertThrowsExactly(NumberFormatException.class, metricsConfiguration::window);
     }
 
     private Map<String, String> baseConfig() {

@@ -57,7 +57,7 @@ public class TargetConfigurationTest {
     @Test
     public void testNonNullHostname() {
         Map<String, String> map = baseConfig();
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertEquals("target-hostname", targetConfiguration.hostname());
     }
 
@@ -65,7 +65,7 @@ public class TargetConfigurationTest {
     public void testNullHostname() {
         Map<String, String> map = baseConfig();
         map.remove("target.hostname");
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, targetConfiguration::hostname);
     }
 
@@ -73,7 +73,7 @@ public class TargetConfigurationTest {
     @Test
     public void testGoodPort() {
         Map<String, String> map = baseConfig();
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertEquals(601, targetConfiguration.port());
     }
 
@@ -81,14 +81,15 @@ public class TargetConfigurationTest {
     public void testNullPort() {
         Map<String, String> map = baseConfig();
         map.remove("target.port");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> TargetConfigurationBuilder.build(map));
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, targetConfiguration::port);
     }
 
     @Test
     public void testTooSmallPort() {
         Map<String, String> map = baseConfig();
         map.put("target.port", "0");
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, targetConfiguration::port);
     }
 
@@ -96,7 +97,7 @@ public class TargetConfigurationTest {
     public void testTooHighPort() {
         Map<String, String> map = baseConfig();
         map.put("target.port", "65536");
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, targetConfiguration::port);
     }
 
@@ -104,14 +105,15 @@ public class TargetConfigurationTest {
     public void testNonNumericPort() {
         Map<String, String> map = baseConfig();
         map.put("target.port", "not a number");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> TargetConfigurationBuilder.build(map));
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
+        Assertions.assertThrowsExactly(NumberFormatException.class, targetConfiguration::port);
     }
 
     // target.reconnectinterval
     @Test
     public void testGoodReconnectInterval() {
         Map<String, String> map = baseConfig();
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertEquals(15000, targetConfiguration.reconnectInterval());
     }
 
@@ -119,14 +121,15 @@ public class TargetConfigurationTest {
     public void testNullReconnectInterval() {
         Map<String, String> map = baseConfig();
         map.remove("target.reconnectinterval");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> TargetConfigurationBuilder.build(map));
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, targetConfiguration::reconnectInterval);
     }
 
     @Test
     public void testTooSmallReconnectInterval() {
         Map<String, String> map = baseConfig();
         map.put("target.reconnectinterval", "0");
-        TargetConfiguration targetConfiguration = TargetConfigurationBuilder.build(map);
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         Assertions.assertThrowsExactly(ConfigurationException.class, targetConfiguration::reconnectInterval);
     }
 
@@ -134,7 +137,8 @@ public class TargetConfigurationTest {
     public void testNonNumericReconnectInterval() {
         Map<String, String> map = baseConfig();
         map.put("target.reconnectinterval", "not a number");
-        Assertions.assertThrowsExactly(ConfigurationException.class, () -> TargetConfigurationBuilder.build(map));
+        TargetConfiguration targetConfiguration = new TargetConfiguration(map);
+        Assertions.assertThrowsExactly(NumberFormatException.class, targetConfiguration::reconnectInterval);
     }
 
     private Map<String, String> baseConfig() {

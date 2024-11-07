@@ -48,20 +48,19 @@ package com.teragrep.rlp_11.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 public class TargetConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TargetConfiguration.class);
-    private final String hostname;
-    private final int port;
-    private final int reconnectInterval;
+    private final Map<String, String> config;
 
-    public TargetConfiguration(final String hostname, final int port, final int reconnectInterval) {
-        this.hostname = hostname;
-        this.port = port;
-        this.reconnectInterval = reconnectInterval;
+    public TargetConfiguration(final Map<String, String> config) {
+        this.config = config;
     }
 
     public String hostname() {
+        final String hostname = config.get("target.hostname");
         if (hostname == null) {
             LOGGER.error("Configuration failure: <target.hostname> is null");
             throw new ConfigurationException("Invalid value for <target.hostname> received");
@@ -70,6 +69,19 @@ public class TargetConfiguration {
     }
 
     public int port() {
+        final String portString = config.get("target.port");
+        if (portString == null) {
+            LOGGER.error("Configuration failure: <target.port> is null");
+            throw new ConfigurationException("Invalid value for <target.port> received");
+        }
+        final int port;
+        try {
+            port = Integer.parseInt(portString);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <target.port>: <{}>", e.getMessage());
+            throw e;
+        }
         if (port < 1 || port > 65535) {
             LOGGER
                     .error(
@@ -82,6 +94,19 @@ public class TargetConfiguration {
     }
 
     public int reconnectInterval() {
+        final String reconnectIntervalString = config.get("target.reconnectinterval");
+        if (reconnectIntervalString == null) {
+            LOGGER.error("Configuration failure: <target.reconnectinterval> is null");
+            throw new ConfigurationException("Invalid value for <target.reconnectinterval> received");
+        }
+        final int reconnectInterval;
+        try {
+            reconnectInterval = Integer.parseInt(reconnectIntervalString);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <target.reconnectinterval>: <{}>", e.getMessage());
+            throw e;
+        }
         if (reconnectInterval <= 0) {
             LOGGER
                     .error(

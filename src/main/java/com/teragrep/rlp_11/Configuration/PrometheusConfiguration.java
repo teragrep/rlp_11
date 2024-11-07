@@ -48,17 +48,31 @@ package com.teragrep.rlp_11.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 public class PrometheusConfiguration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrometheusConfiguration.class);
+    private final Map<String, String> config;
 
-    private final int port;
-
-    public PrometheusConfiguration(final int port) {
-        this.port = port;
+    public PrometheusConfiguration(final Map<String, String> config) {
+        this.config = config;
     }
 
     public int port() {
+        final String portString = config.get("prometheus.port");
+        if (portString == null) {
+            LOGGER.error("Configuration failure: <prometheus.port> is null");
+            throw new ConfigurationException("Invalid value for <prometheus.port> received");
+        }
+        final int port;
+        try {
+            port = Integer.parseInt(portString);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <prometheus.port>: <{}>", e.getMessage());
+            throw e;
+        }
         if (port < 1 || port > 65535) {
             LOGGER
                     .error(
