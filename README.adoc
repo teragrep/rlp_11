@@ -1,35 +1,34 @@
-// Before publishing your new repository:
-// 1. Write the readme file
-// 2. Update the issues link in Contributing section in the readme file
-// 3. Update the discussion link in config.yml file in .github/ISSUE_TEMPLATE directory
+=  RELP Commit Latency Probe rlp_11
 
-= repo-template
-
-// Add a short description of your project. Tell what your project does and what it's used for.
-
-This is a template repository for Teragrep organization.
+Measures latency for RELP events.
 
 == Features
 
-// List your project's features
+Provides Dropwizard metrics
+
+Provides Prometheus endpoint
 
 == Documentation
 
-See the official documentation on https://docs.teragrep.com[docs.teragrep.com].
-
 == Limitations
 
-// If your project has limitations, please list them. Otherwise remove this section.
+== How to compile
 
-== How to [compile/use/implement]
+[source]
+----
+mvn clean package
+----
 
-// add instructions how people can start to use your project
+== How to use
+
+[source]
+----
+java -jar rlp_11.jar
+----
 
 == Contributing
 
-// Change the repository name in the issues link to match with your project's name
-
-You can involve yourself with our project by https://github.com/teragrep/repo-template/issues/new/choose[opening an issue] or submitting a pull request.
+You can involve yourself with our project by https://github.com/teragrep/rlp_11/issues/new/choose[opening an issue] or submitting a pull request.
 
 Contribution requirements:
 
