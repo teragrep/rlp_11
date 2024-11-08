@@ -10,7 +10,7 @@
   <url>https://teragrep.com</url>
   <properties>
     <changelist>-SNAPSHOT</changelist>
-    <cnf_01.version>0.0.1-SNAPSHOT</cnf_01.version>
+    <cnf_01.version>1.0.0</cnf_01.version>
     <dropwizard.metrics.version>4.2.28</dropwizard.metrics.version>
     <eclipse.jetty.version>11.0.24</eclipse.jetty.version>
     <eclipse.parsson.version>1.1.7</eclipse.parsson.version>
