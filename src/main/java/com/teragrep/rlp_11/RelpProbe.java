@@ -47,17 +47,13 @@ package com.teragrep.rlp_11;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Slf4jReporter;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
-import com.codahale.metrics.jmx.JmxReporter;
 import com.teragrep.rlp_01.RelpBatch;
 import com.teragrep.rlp_01.RelpConnection;
 import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
-import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +71,6 @@ public class RelpProbe {
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
     private final TargetConfiguration targetConfiguration;
     private final RecordFactory recordFactory;
-    private final PrometheusConfiguration prometheusConfiguration;
     private final MetricsConfiguration metricsConfiguration;
     private final ProbeConfiguration probeConfiguration;
     private final AtomicBoolean stayRunning = new AtomicBoolean(true);
@@ -89,28 +84,24 @@ public class RelpProbe {
     private Counter retriedConnects;
     private Timer sendLatency;
     private Timer connectLatency;
-    private JmxReporter jmxReporter;
-    private Slf4jReporter slf4jReporter;
-    private Server jettyServer;
+    private final MetricRegistry metricRegistry;
 
     public RelpProbe(
             final TargetConfiguration targetConfiguration,
             final ProbeConfiguration probeConfiguration,
-            final PrometheusConfiguration prometheusConfiguration,
             final MetricsConfiguration metricsConfiguration,
-            final RecordFactory recordFactory
+            final RecordFactory recordFactory,
+            final MetricRegistry metricRegistry
     ) {
         this.targetConfiguration = targetConfiguration;
         this.probeConfiguration = probeConfiguration;
-        this.recordFactory = recordFactory;
-        this.prometheusConfiguration = prometheusConfiguration;
         this.metricsConfiguration = metricsConfiguration;
+        this.recordFactory = recordFactory;
+        this.metricRegistry = metricRegistry;
     }
 
     public void start() {
         createMetrics(metricsConfiguration.name());
-        this.jmxReporter.start();
-        this.slf4jReporter.start(1, TimeUnit.MINUTES);
         relpConnection = new RelpConnection();
         connect();
         while (stayRunning.get()) {
@@ -140,7 +131,7 @@ public class RelpProbe {
             }
             try {
                 LOGGER.debug("Sleeping before sending next event");
-                Thread.sleep(probeConfiguration.interval());
+                TimeUnit.MILLISECONDS.sleep(probeConfiguration.interval());
             }
             catch (InterruptedException e) {
                 LOGGER.warn("Sleep interrupted: <{}>", e.getMessage());
@@ -148,7 +139,6 @@ public class RelpProbe {
         }
         disconnect();
         latch.countDown();
-        teardownMetrics();
     }
 
     private void connect() {
@@ -169,7 +159,7 @@ public class RelpProbe {
             if (!connected) {
                 try {
                     LOGGER.debug("Sleeping for <[{}]>ms before reconnecting", targetConfiguration.reconnectInterval());
-                    Thread.sleep(targetConfiguration.reconnectInterval());
+                    TimeUnit.MILLISECONDS.sleep(targetConfiguration.reconnectInterval());
                     retriedConnects.inc();
                 }
                 catch (InterruptedException e) {
@@ -219,7 +209,6 @@ public class RelpProbe {
     }
 
     private void createMetrics(final String name) {
-        final MetricRegistry metricRegistry = new MetricRegistry();
         this.records = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "records"));
         this.resends = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "resends"));
         this.connects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "connects"));
@@ -229,24 +218,5 @@ public class RelpProbe {
                 .timer(name(RelpProbe.class, "<[" + name + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
         this.connectLatency = metricRegistry
                 .timer(name(RelpProbe.class, "<[" + name + "]>", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
-        jmxReporter = JmxReporter.forRegistry(metricRegistry).build();
-        slf4jReporter = Slf4jReporter
-                .forRegistry(metricRegistry)
-                .outputTo(LoggerFactory.getLogger(RelpProbe.class))
-                .build();
-        jettyServer = new Server(prometheusConfiguration.port());
-    }
-
-    private void teardownMetrics() {
-        jmxReporter.close();
-        slf4jReporter.close();
-        try {
-            jettyServer.stop();
-        }
-        //CHECKSTYLE:OFF
-        catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        //CHECKSTYLE:ON
     }
 }

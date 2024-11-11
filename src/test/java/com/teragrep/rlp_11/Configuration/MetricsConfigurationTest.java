@@ -101,10 +101,43 @@ public class MetricsConfigurationTest {
         Assertions.assertThrowsExactly(NumberFormatException.class, metricsConfiguration::window);
     }
 
+    // metrics.interval
+    @Test
+    public void testGoodInterval() {
+        Map<String, String> map = baseConfig();
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        Assertions.assertEquals(60, metricsConfiguration.interval());
+    }
+
+    @Test
+    public void testNullInterval() {
+        Map<String, String> map = baseConfig();
+        map.remove("metrics.interval");
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, metricsConfiguration::interval);
+    }
+
+    @Test
+    public void testTooSmallInterval() {
+        Map<String, String> map = baseConfig();
+        map.put("metrics.interval", "0");
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, metricsConfiguration::interval);
+    }
+
+    @Test
+    public void testNonNumericInterval() {
+        Map<String, String> map = baseConfig();
+        map.put("metrics.interval", "Not a number here");
+        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        Assertions.assertThrowsExactly(NumberFormatException.class, metricsConfiguration::interval);
+    }
+
     private Map<String, String> baseConfig() {
         Map<String, String> map = new HashMap<>();
         map.put("metrics.name", "target-name");
         map.put("metrics.window", "1337");
+        map.put("metrics.interval", "60");
         return map;
     }
 }

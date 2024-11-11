@@ -45,15 +45,22 @@
  */
 package com.teragrep.rlp_11;
 
+import com.codahale.metrics.MetricRegistry;
+import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.RecordConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
 import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
+import com.teragrep.rlp_11.metrics.HttpReport;
+import com.teragrep.rlp_11.metrics.JmxReport;
+import com.teragrep.rlp_11.metrics.Report;
+import com.teragrep.rlp_11.metrics.Slf4jReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -62,7 +69,7 @@ public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static void main(final String[] args) throws com.teragrep.cnf_01.ConfigurationException {
+    public static void main(final String[] args) throws ConfigurationException, IOException {
         final PathConfiguration pathConfiguration = new PathConfiguration(
                 System.getProperty("configurationPath", "etc/rlp_11.properties")
         );
@@ -70,7 +77,7 @@ public class Main {
         try {
             map = pathConfiguration.asMap();
         }
-        catch (com.teragrep.cnf_01.ConfigurationException e) {
+        catch (ConfigurationException e) {
             LOGGER.error("Failed to create PathConfiguration: <{}>", e.getMessage());
             throw e;
         }
@@ -84,13 +91,21 @@ public class Main {
                 recordConfiguration.appname()
         );
         final ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
+        final MetricRegistry metricRegistry = new MetricRegistry();
         final RelpProbe relpProbe = new RelpProbe(
                 targetConfiguration,
                 probeConfiguration,
-                prometheusConfiguration,
                 metricsConfiguration,
-                recordFactory
+                recordFactory,
+                metricRegistry
         );
+        final Report report = new Slf4jReport(
+                new JmxReport(new HttpReport(metricRegistry, prometheusConfiguration.port()), metricRegistry),
+                metricRegistry,
+                metricsConfiguration.interval()
+        );
+        report.start();
+
         final Thread shutdownHook = new Thread(() -> {
             LOGGER.debug("Stopping RelpProbe..");
             relpProbe.stop();
@@ -107,7 +122,19 @@ public class Main {
                         "Using hostname <[{}]> and appname <[{}]> for the records.", recordConfiguration.hostname(),
                         recordConfiguration.appname()
                 );
+        LOGGER
+                .info(
+                        "Printing reports every <[{}]> seconds. Prometheus stats are available on port <[{}]>.",
+                        metricsConfiguration.interval(), prometheusConfiguration.port()
+                );
         relpProbe.start();
+        try {
+            report.close();
+        }
+        catch (IOException e) {
+            LOGGER.error("Failed to close stats reporting: <{}>", e.getMessage());
+            throw e;
+        }
     }
 
     private static String getHostname() {
