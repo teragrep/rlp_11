@@ -1,0 +1,14 @@
+[Unit]
+Description=com.teragrep.rlp_11 instance %I
+ConditionPathExists=/opt/teragrep/rlp_11/etc/rlp_11.%I.properties
+
+[Service]
+ExecStart=/usr/lib/jvm/jre-11-openjdk/bin/java \
+    -DconfigurationPath=/opt/teragrep/rlp_11/etc/rlp_11.%I.properties \
+    -Dlog4j2.configurationFile=file:/opt/teragrep/rlp_11/etc/log4j2.%I.xml \
+    -jar /opt/teragrep/rlp_11/lib/rlp_11.jar
+User=srv-rlp_11
+WorkingDirectory=/opt/teragrep/rlp_11
+
+[Install]
+WantedBy=multi-user.target
