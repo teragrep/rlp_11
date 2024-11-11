@@ -75,8 +75,8 @@
           <group>Teragrep/rlp_11</group>
           <description>${project.groupId}-${project.artifactId}</description>
           <needarch>false</needarch>
-          <defaultUsername>root</defaultUsername>
-          <defaultGroupname>root</defaultGroupname>
+          <defaultUsername>srv-rlp_11</defaultUsername>
+          <defaultGroupname>srv-rlp_11</defaultGroupname>
           <defaultFilemode>0644</defaultFilemode>
           <defaultDirmode>0755</defaultDirmode>
           <mappings>
@@ -85,36 +85,39 @@
               <directoryIncluded>false</directoryIncluded>
               <sources>
                 <source>
-                  <location>${project.basedir}/src/main/resources/</location>
-                  <includes>
-                    <include>rlp_11.service</include>
-                    <include>rlp_11@.service</include>
-                  </includes>
+                  <location>src/usr/lib/systemd/system</location>
                 </source>
               </sources>
             </mapping>
             <mapping>
               <directory>/opt/teragrep/${project.artifactId}/etc</directory>
-              <configuration>noreplace</configuration>
               <directoryIncluded>true</directoryIncluded>
-              <filemode>644</filemode>
-              <dirmode>755</dirmode>
+              <filemode>755</filemode>
+            </mapping>
+            <mapping>
+              <directory>/opt/teragrep/${project.artifactId}/etc</directory>
+              <configuration>noreplace</configuration>
+              <directoryIncluded>false</directoryIncluded>
               <username>srv-rlp_11</username>
               <groupname>srv-rlp_11</groupname>
               <recurseDirectories>false</recurseDirectories>
               <sources>
                 <source>
-                  <location>${project.basedir}/src/main/resources</location>
-                  <includes>
-                    <include>log4j2.xml</include>
-                    <include>rlp_11.properties</include>
-                  </includes>
+                  <location>${project.basedir}/src/opt/teragrep/rlp_11/etc/log4j2.xml</location>
+                </source>
+                <source>
+                  <location>${project.basedir}/src/opt/teragrep/rlp_11/etc/rlp_11.properties</location>
                 </source>
               </sources>
             </mapping>
             <mapping>
               <directory>/opt/teragrep/${project.artifactId}/lib</directory>
               <directoryIncluded>true</directoryIncluded>
+              <filemode>755</filemode>
+            </mapping>
+            <mapping>
+              <directory>/opt/teragrep/${project.artifactId}/lib</directory>
+              <directoryIncluded>false</directoryIncluded>
               <filemode>755</filemode>
               <dirmode>755</dirmode>
               <username>srv-rlp_11</username>
