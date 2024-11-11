@@ -518,7 +518,7 @@
             <exclude>README.adoc</exclude>
             <!-- packaging -->
             <exclude>rpm/rpm.pom.xml</exclude>
-            <exclude>rpm/src/main/resources/**</exclude>
+            <exclude>rpm/src/**</exclude>
           </excludes>
         </configuration>
         <executions>
