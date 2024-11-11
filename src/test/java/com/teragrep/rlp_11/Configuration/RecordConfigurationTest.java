@@ -53,36 +53,36 @@ import java.util.Map;
 
 public class RecordConfigurationTest {
 
-    // event.hostname
+    // record.hostname
     @Test
     public void testNonNullHostname() {
         Map<String, String> map = baseConfig();
-        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
-        Assertions.assertEquals("my-hostname", eventConfiguration.hostname());
+        RecordConfiguration recordConfiguration = new RecordConfiguration(map);
+        Assertions.assertEquals("my-hostname", recordConfiguration.hostname());
     }
 
     @Test
     public void testNullHostname() {
         Map<String, String> map = baseConfig();
         map.remove("record.hostname");
-        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
-        Assertions.assertThrowsExactly(ConfigurationException.class, eventConfiguration::hostname);
+        RecordConfiguration recordConfiguration = new RecordConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, recordConfiguration::hostname);
     }
 
-    // event.appname
+    // record.appname
     @Test
     public void testNonNullAppname() {
         Map<String, String> map = baseConfig();
-        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
-        Assertions.assertEquals("my-appname", eventConfiguration.appname());
+        RecordConfiguration recordConfiguration = new RecordConfiguration(map);
+        Assertions.assertEquals("my-appname", recordConfiguration.appname());
     }
 
     @Test
     public void testNullAppname() {
         Map<String, String> map = baseConfig();
         map.remove("record.appname");
-        RecordConfiguration eventConfiguration = new RecordConfiguration(map);
-        Assertions.assertThrowsExactly(ConfigurationException.class, eventConfiguration::appname);
+        RecordConfiguration recordConfiguration = new RecordConfiguration(map);
+        Assertions.assertThrowsExactly(ConfigurationException.class, recordConfiguration::appname);
     }
 
     private Map<String, String> baseConfig() {

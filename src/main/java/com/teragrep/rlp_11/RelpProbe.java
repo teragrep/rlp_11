@@ -130,7 +130,7 @@ public class RelpProbe {
                 }
             }
             try {
-                LOGGER.debug("Sleeping before sending next event");
+                LOGGER.debug("Sleeping before sending next record");
                 TimeUnit.MILLISECONDS.sleep(probeConfiguration.interval());
             }
             catch (InterruptedException e) {

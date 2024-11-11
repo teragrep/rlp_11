@@ -1,6 +1,6 @@
 =  RELP Commit Latency Probe rlp_11
 
-Measures latency for RELP events.
+Measures latency for RELP records.
 
 == Features
 

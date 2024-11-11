@@ -69,7 +69,7 @@ public class RecordFactory {
     public byte[] createRecord() {
         final Instant timestamp = Instant.now();
         final String timestampString = timestamp.getEpochSecond() + "." + timestamp.getNano();
-        final JsonObject event = Json
+        final JsonObject record = Json
                 .createObjectBuilder()
                 .add("origin", origin)
                 .add("timestamp", timestampString)
@@ -80,7 +80,7 @@ public class RecordFactory {
                 .withHostname(hostname)
                 .withFacility(Facility.USER)
                 .withSeverity(Severity.INFORMATIONAL)
-                .withMsg(event.toString())
+                .withMsg(record.toString())
                 .toRfc5424SyslogMessage()
                 .getBytes(StandardCharsets.UTF_8);
     }
