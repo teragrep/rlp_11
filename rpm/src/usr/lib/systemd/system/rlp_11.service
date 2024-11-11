@@ -1,6 +1,7 @@
 [Unit]
 Description=com.teragrep.rlp_11
 ConditionPathExists=/opt/teragrep/rlp_11/etc/rlp_11.properties
+ConditionPathExists=/opt/teragrep/rlp_11/etc/log4j2.xml
 
 [Service]
 ExecStart=/usr/lib/jvm/jre-11-openjdk/bin/java \
