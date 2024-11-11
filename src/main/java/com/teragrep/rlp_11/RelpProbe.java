@@ -71,20 +71,18 @@ public class RelpProbe {
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
     private final TargetConfiguration targetConfiguration;
     private final RecordFactory recordFactory;
-    private final MetricsConfiguration metricsConfiguration;
     private final ProbeConfiguration probeConfiguration;
     private final AtomicBoolean stayRunning = new AtomicBoolean(true);
     private RelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
     private boolean connected = false;
-    private Counter records;
-    private Counter resends;
-    private Counter connects;
-    private Counter disconnects;
-    private Counter retriedConnects;
-    private Timer sendLatency;
-    private Timer connectLatency;
-    private final MetricRegistry metricRegistry;
+    private final Counter records;
+    private final Counter resends;
+    private final Counter connects;
+    private final Counter disconnects;
+    private final Counter retriedConnects;
+    private final Timer sendLatency;
+    private final Timer connectLatency;
 
     public RelpProbe(
             final TargetConfiguration targetConfiguration,
@@ -93,15 +91,45 @@ public class RelpProbe {
             final RecordFactory recordFactory,
             final MetricRegistry metricRegistry
     ) {
+        this(
+                targetConfiguration,
+                probeConfiguration,
+                recordFactory,
+                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "records")),
+                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "resends")),
+                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "connects")),
+                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "disconnects")),
+                metricRegistry
+                        .counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "retriedConnects")),
+                metricRegistry.timer(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window()))), metricRegistry.timer(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())))
+        );
+    }
+
+    public RelpProbe(
+            final TargetConfiguration targetConfiguration,
+            final ProbeConfiguration probeConfiguration,
+            final RecordFactory recordFactory,
+            final Counter records,
+            final Counter resends,
+            final Counter connects,
+            final Counter disconnects,
+            final Counter retriedConnects,
+            final Timer sendLatency,
+            final Timer connectLatency
+    ) {
         this.targetConfiguration = targetConfiguration;
         this.probeConfiguration = probeConfiguration;
-        this.metricsConfiguration = metricsConfiguration;
         this.recordFactory = recordFactory;
-        this.metricRegistry = metricRegistry;
+        this.records = records;
+        this.resends = resends;
+        this.connects = connects;
+        this.disconnects = disconnects;
+        this.retriedConnects = retriedConnects;
+        this.sendLatency = sendLatency;
+        this.connectLatency = connectLatency;
     }
 
     public void start() {
-        createMetrics(metricsConfiguration.name());
         relpConnection = new RelpConnection();
         connect();
         while (stayRunning.get()) {
@@ -206,17 +234,5 @@ public class RelpProbe {
             throw new RuntimeException(e);
         }
         LOGGER.debug("RelpProbe stopped.");
-    }
-
-    private void createMetrics(final String name) {
-        this.records = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "records"));
-        this.resends = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "resends"));
-        this.connects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "connects"));
-        this.disconnects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "disconnects"));
-        this.retriedConnects = metricRegistry.counter(name(RelpProbe.class, "<[" + name + "]>", "retriedConnects"));
-        this.sendLatency = metricRegistry
-                .timer(name(RelpProbe.class, "<[" + name + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
-        this.connectLatency = metricRegistry
-                .timer(name(RelpProbe.class, "<[" + name + "]>", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())));
     }
 }
