@@ -76,7 +76,7 @@ public class HttpReport implements Report {
 
         final MetricsServlet metricsServlet = new MetricsServlet();
         final ServletHolder servletHolder = new ServletHolder(metricsServlet);
-        context.addServlet(servletHolder, "/metrics");
+        context.addServlet(servletHolder, "/");
 
         // Start the webserver.
         try {
