@@ -68,7 +68,7 @@
           <name>${project.groupId}-${project.artifactId}</name>
           <version>${project.version}</version>
           <release>${env.BUILD_ID}</release>
-          <license>Proprietary</license>
+          <license>AGPL</license>
           <distribution>Teragrep rlp_11</distribution>
           <vendor>https://teragrep.com/</vendor>
           <packager>Teragrep &lt;servicedesk@teragrep.com&gt;</packager>
