@@ -45,6 +45,7 @@
  */
 package com.teragrep.rlp_11;
 
+import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.net_01.channel.socket.PlainFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
@@ -56,7 +57,6 @@ import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
 import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
 import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
-import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -124,8 +124,7 @@ public class ConnectionTest {
     @Test
     public void connectToServerTest() {
         Map<String, String> map = Assertions
-                .assertDoesNotThrow(() -> new PathConfiguration("src/test/resources/connectiontest.properties").asMap());
-        final PrometheusConfiguration prometheusConfiguration = new PrometheusConfiguration(map);
+                .assertDoesNotThrow(() -> new PathConfiguration("etc/rlp_11.properties").asMap());
         final ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
         final RecordFactory recordFactory = new RecordFactory("localhost", "rlp_11", "rlp_11");
         final TargetConfiguration targetConfiguration = new TargetConfiguration(map);
@@ -134,9 +133,9 @@ public class ConnectionTest {
         RelpProbe relpProbe = new RelpProbe(
                 targetConfiguration,
                 probeConfiguration,
-                prometheusConfiguration,
                 metricsConfiguration,
-                recordFactory
+                recordFactory,
+                new MetricRegistry()
         );
 
         TimerTask task = new TimerTask() {

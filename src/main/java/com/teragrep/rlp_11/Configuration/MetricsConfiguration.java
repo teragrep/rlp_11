@@ -88,4 +88,25 @@ public class MetricsConfiguration {
         }
         return window;
     }
+
+    public int interval() {
+        final String intervalString = config.get("metrics.interval");
+        if (intervalString == null) {
+            LOGGER.error("Configuration failure: <metrics.interval> is null");
+            throw new ConfigurationException("Invalid value for <metrics.interval> received");
+        }
+        final int interval;
+        try {
+            interval = Integer.parseInt(intervalString);
+        }
+        catch (NumberFormatException e) {
+            LOGGER.error("Configuration failure: Invalid value for <metrics.interval>: <{}>", e.getMessage());
+            throw e;
+        }
+        if (interval <= 0) {
+            LOGGER.error("Configuration failure: <metrics.interval> <[{}]> too small, expected to be >0", interval);
+            throw new ConfigurationException("Invalid value for <metrics.interval> received");
+        }
+        return interval;
+    }
 }
