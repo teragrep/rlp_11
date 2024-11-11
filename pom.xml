@@ -510,12 +510,15 @@
             <exclude>eclipse-java-formatter.xml</exclude>
             <exclude>src/main/assembly/jar-with-dependencies.xml</exclude>
             <!-- test properties -->
-            <exclude>etc/*.properties</exclude>
+            <exclude>src/test/resources/*.properties</exclude>
             <!-- logging configuration -->
             <exclude>src/main/resources/log4j2.xml</exclude>
             <exclude>src/test/resources/log4j2-test.xml</exclude>
             <!-- readme -->
             <exclude>README.adoc</exclude>
+            <!-- packaging -->
+            <exclude>rpm/rpm.pom.xml</exclude>
+            <exclude>rpm/src/**</exclude>
           </excludes>
         </configuration>
         <executions>

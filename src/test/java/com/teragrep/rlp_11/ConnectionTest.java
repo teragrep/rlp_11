@@ -124,7 +124,7 @@ public class ConnectionTest {
     @Test
     public void connectToServerTest() {
         Map<String, String> map = Assertions
-                .assertDoesNotThrow(() -> new PathConfiguration("etc/rlp_11.properties").asMap());
+                .assertDoesNotThrow(() -> new PathConfiguration("src/test/resources/connect.properties").asMap());
         final ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
         final RecordFactory recordFactory = new RecordFactory("localhost", "rlp_11", "rlp_11");
         final TargetConfiguration targetConfiguration = new TargetConfiguration(map);
