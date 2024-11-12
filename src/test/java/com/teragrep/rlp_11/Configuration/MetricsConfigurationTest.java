@@ -53,22 +53,6 @@ import java.util.Map;
 
 public class MetricsConfigurationTest {
 
-    // metrics.name
-    @Test
-    public void testNonNullName() {
-        Map<String, String> map = baseConfig();
-        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
-        Assertions.assertEquals("target-name", metricsConfiguration.name());
-    }
-
-    @Test
-    public void testNullName() {
-        Map<String, String> map = baseConfig();
-        map.remove("metrics.name");
-        MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
-        Assertions.assertThrowsExactly(ConfigurationException.class, metricsConfiguration::name);
-    }
-
     // metrics.window
     @Test
     public void testGoodWindow() {
@@ -135,7 +119,6 @@ public class MetricsConfigurationTest {
 
     private Map<String, String> baseConfig() {
         Map<String, String> map = new HashMap<>();
-        map.put("metrics.name", "target-name");
         map.put("metrics.window", "1337");
         map.put("metrics.interval", "60");
         return map;

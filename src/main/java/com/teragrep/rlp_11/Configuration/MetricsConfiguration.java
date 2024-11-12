@@ -59,15 +59,6 @@ public class MetricsConfiguration {
         this.config = config;
     }
 
-    public String name() {
-        final String name = config.get("metrics.name");
-        if (name == null) {
-            LOGGER.error("Configuration failure: <metrics.name> is null");
-            throw new ConfigurationException("Invalid value for <metrics.name> received");
-        }
-        return name;
-    }
-
     public int window() {
         final String windowString = config.get("metrics.window");
         if (windowString == null) {
@@ -84,7 +75,7 @@ public class MetricsConfiguration {
         }
         if (window <= 0) {
             LOGGER.error("Configuration failure: <metrics.window> <[{}]> too small, expected to be >0", window);
-            throw new ConfigurationException("Invalid value for <metrics.name> received");
+            throw new ConfigurationException("Invalid value for <metrics.window> received");
         }
         return window;
     }
