@@ -90,6 +90,25 @@
               </sources>
             </mapping>
             <mapping>
+              <directory>/opt/teragrep/${project.artifactId}/share/doc/zabbix/templates</directory>
+              <directoryIncluded>true</directoryIncluded>
+              <filemode>755</filemode>
+              <recurseDirectories>true</recurseDirectories>
+            </mapping>
+            <mapping>
+              <directory>/opt/teragrep/${project.artifactId}/share/doc/zabbix/templates</directory>
+              <configuration>noreplace</configuration>
+              <directoryIncluded>false</directoryIncluded>
+              <username>srv-rlp_11</username>
+              <groupname>srv-rlp_11</groupname>
+              <recurseDirectories>true</recurseDirectories>
+              <sources>
+                <source>
+                  <location>${project.basedir}/src/opt/teragrep/rlp_11/share/doc/zabbix/templates/zabbix.template.json</location>
+                </source>
+              </sources>
+            </mapping>
+            <mapping>
               <directory>/opt/teragrep/${project.artifactId}/etc</directory>
               <directoryIncluded>true</directoryIncluded>
               <filemode>755</filemode>
