@@ -6,9 +6,15 @@ Measures latency for RELP records.
 
 Provides Dropwizard metrics
 
-Provides Prometheus endpoint
+Provides Prometheus endpoint. It listens to port set by `metrics.port` and exposes metrics to path `/metrics`
+
+Provides Prometheus template for Zabbix
 
 == Documentation
+
+=== Zabbix
+
+Import the template, add `{$PROMETHEUS_HOST}` macro with full url to the metrics endpoint to wanted host and link it to `rlp_11_prometheus` template.
 
 == Limitations
 

@@ -95,13 +95,12 @@ public class RelpProbe {
                 targetConfiguration,
                 probeConfiguration,
                 recordFactory,
-                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "records")),
-                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "resends")),
-                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "connects")),
-                metricRegistry.counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "disconnects")),
-                metricRegistry
-                        .counter(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "retriedConnects")),
-                metricRegistry.timer(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window()))), metricRegistry.timer(name(RelpProbe.class, "<[" + metricsConfiguration.name() + "]>", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())))
+                metricRegistry.counter(name(RelpProbe.class, "records")),
+                metricRegistry.counter(name(RelpProbe.class, "resends")),
+                metricRegistry.counter(name(RelpProbe.class, "connects")),
+                metricRegistry.counter(name(RelpProbe.class, "disconnects")),
+                metricRegistry.counter(name(RelpProbe.class, "retriedConnects")),
+                metricRegistry.timer(name(RelpProbe.class, "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window()))), metricRegistry.timer(name(RelpProbe.class, "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())))
         );
     }
 

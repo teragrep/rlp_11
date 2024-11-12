@@ -1,0 +1,454 @@
+{
+  "zabbix_export": {
+    "version": "6.0",
+    "date": "2024-11-12T12:01:55Z",
+    "groups": [
+      {
+        "uuid": "33ffa51c92774b2d9b04a9341e726734",
+        "name": "rlp_11"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "2ed958d0bd564435b8745719bf655f9f",
+        "template": "rlp_11_prometheus",
+        "name": "rlp_11_prometheus",
+        "groups": [
+          {
+            "name": "rlp_11"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "072dbcfd14d64adf81b53b3f3e8f24ee",
+            "name": "Prometheus Agent rlp_11",
+            "type": "HTTP_AGENT",
+            "key": "prometheus_agent_rlp_11",
+            "delay": "5s",
+            "value_type": "TEXT",
+            "url": "{$PROMETHEUS_HOST}"
+          },
+          {
+            "uuid": "5b34ca0f63c0484ba19e35d28a8e387f",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connects",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connects",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connects, type=com.codahale.metrics.Counter)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connects",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "679bbda9a1fd4e428a5ae6d5b1baeaec",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_records",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_records",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.records, type=com.codahale.metrics.Counter)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_records",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "94b6c4e0f7b14ad8b33a8cfdc4c67921",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.5\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.5\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connectLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency{quantile=\"0.5\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "0a3f8d489abb415884a63f6e98c69df1",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.75\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.75\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connectLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency{quantile=\"0.75\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "8d329110c7ef4c98880e06507f2b39bf",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.95\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.95\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connectLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency{quantile=\"0.95\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "9ffb8428e7ea4c1fbe44ab3a6ce64149",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.98\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.98\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connectLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency{quantile=\"0.98\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "feb7325f9b4548e6aa8bce2fb6bbada6",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.99\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.99\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connectLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency{quantile=\"0.99\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "5456ddfb80a148ad8db8623af33b6cb6",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.999\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency[quantile=\"0.999\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.connectLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency{quantile=\"0.999\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "7c4d2a357fa24e9497bc11ed9f93112d",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency_count",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_connectLatency_count",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Description missing",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_connectLatency_count",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "a5d73bc000bc4cb9abb9822ca3a8138b",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.5\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.5\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.sendLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency{quantile=\"0.5\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "50adab1d17194f8bad5ccbad16e227f8",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.75\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.75\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.sendLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency{quantile=\"0.75\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "7d58da3d675443259be97faccec5c620",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.95\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.95\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.sendLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency{quantile=\"0.95\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "515c65fae796413eb4c7d6158b02c32d",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.98\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.98\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.sendLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency{quantile=\"0.98\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "c26b0e60daca4427b31d77ca71033a06",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.99\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.99\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.sendLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency{quantile=\"0.99\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "f1c21a941de74011b3b01fc30e86087b",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.999\"]",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency[quantile=\"0.999\"]",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.sendLatency, type=com.codahale.metrics.Timer)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency{quantile=\"0.999\",}",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "e9eba88e0fd440e0904f44dace42559c",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency_count",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_sendLatency_count",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Description missing",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_sendLatency_count",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "faec2fab3b964b7f9519810b4ddd200e",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_resends",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_resends",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.resends, type=com.codahale.metrics.Counter)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_resends",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "4b10d1b2a2b348babf11a2687f708e8a",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_disconnects",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_disconnects",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.disconnects, type=com.codahale.metrics.Counter)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_disconnects",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          },
+          {
+            "uuid": "9ba558043acb430d94511162f8fdd636",
+            "name": "rlp_11_com_teragrep_rlp_11_RelpProbe_retriedConnects",
+            "type": "DEPENDENT",
+            "key": "rlp_11_com_teragrep_rlp_11_RelpProbe_retriedConnects",
+            "delay": "0",
+            "value_type": "FLOAT",
+            "description": "Generated from Dropwizard metric import (metric=com.teragrep.rlp_11.RelpProbe.retriedConnects, type=com.codahale.metrics.Counter)",
+            "preprocessing": [
+              {
+                "type": "PROMETHEUS_PATTERN",
+                "parameters": [
+                  "com_teragrep_rlp_11_RelpProbe_retriedConnects",
+                  "value",
+                  ""
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "prometheus_agent_rlp_11"
+            }
+          }
+        ],
+        "discovery_rules": []
+      }
+    ]
+  }
+}
