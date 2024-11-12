@@ -100,7 +100,7 @@ public class RelpProbe {
                 metricRegistry.counter(name(RelpProbe.class, "connects")),
                 metricRegistry.counter(name(RelpProbe.class, "disconnects")),
                 metricRegistry.counter(name(RelpProbe.class, "retriedConnects")),
-                metricRegistry.timer(name(RelpProbe.class, "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window()))), metricRegistry.timer(name(RelpProbe.class, "rlp_11", "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())))
+                metricRegistry.timer(name(RelpProbe.class, "sendLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window()))), metricRegistry.timer(name(RelpProbe.class, "connectLatency"), () -> new Timer(new SlidingWindowReservoir(metricsConfiguration.window())))
         );
     }
 
