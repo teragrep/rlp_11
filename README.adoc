@@ -12,11 +12,68 @@ Provides Prometheus template for Zabbix
 
 == Documentation
 
+=== Configuration
+
+It will use system property `configurationPath` to find the configuration, or use `etc/rlp_11.properties` if not provided.
+
+Example configuration files can be found under link:rpm/src/opt/teragrep/rlp_11/etc[here].
+
+[cols="1,1"]
+|===
+|Configuration key|Description
+
+|`metrics.window`
+|Size of the sliding window reservoir used by metrics
+
+|`metrics.interval`
+|Metrics report interval, in seconds
+
+|`probe.interval`
+|Delay between sending records, in milliseconds
+
+|`prometheus.port`
+|Prometheus endpoint port
+
+|`record.appname`
+|Appname used in RELP record
+
+|`record.hostname`
+|Hostname used in RELP record
+
+|`target.hostname`
+|RELP Server target address
+
+|`target.port`
+|Relp Server target port
+
+|`target.reconnectinterval`
+|RELP Server reconnect interval, in milliseconds
+
+|===
+
+=== Systemd services
+
+All configuration files are expected to be in `/opt/teragrep/rlp_11/etc` directory and readable by user `srv-rlp_11`.
+
+==== Simple systemd service
+
+The simple service instance can be started with `systemctl start rlp_11`.
+
+The simple `rlp_11` service will use `rlp_11.properties` and `log4j2.xml` files that are provided in the rpm.
+
+==== Multi-instance systemd service
+
+Multiple service instances can be started with `systemctl start rlp_11@InstanceNameReplaceMe`.
+
+For example the instance `rlp_11@InstanceNameReplaceMe` service will look for `rlp_11.InstanceNameReplaceMe.properties` and `log4j2.InstaceNameReplaceMe.xml` files that must be provided by the user.
+
 === Zabbix
 
 Import the template, add `{$PROMETHEUS_HOST}` macro with full url to the metrics endpoint to wanted host and link it to `rlp_11_prometheus` template.
 
 == Limitations
+
+Needs to be built on java 11.
 
 == How to compile
 
