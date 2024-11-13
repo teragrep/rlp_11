@@ -55,9 +55,17 @@ Example configuration files can be found under link:rpm/src/opt/teragrep/rlp_11/
 
 All configuration files are expected to be in `/opt/teragrep/rlp_11/etc` directory and readable by user `srv-rlp_11`.
 
+==== Simple systemd service
+
+The simple service instance can be started with `systemctl start rlp_11`.
+
 The simple `rlp_11` service will use `rlp_11.properties` and `log4j2.xml` files that are provided in the rpm.
 
-Multi-instance `rlp_11@InstaceNameReplaceMe` service will use `rlp_11.InstaceNameReplaceMe.properties` and `log4j2.InstaceNameReplaceMe.xml` files that must be provided by the user.
+===== Multi-instance systemd service
+
+Multiple service instances can be started with `systemctl start rlp_11@InstanceNameReplaceMe`.
+
+For example the instance `rlp_11@InstanceNameReplaceMe` service will look for `rlp_11.InstanceNameReplaceMe.properties` and `log4j2.InstaceNameReplaceMe.xml` files that must be provided by the user.
 
 === Zabbix
 
