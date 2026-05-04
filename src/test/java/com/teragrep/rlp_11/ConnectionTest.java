@@ -48,21 +48,30 @@ package com.teragrep.rlp_11;
 import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.PathConfiguration;
 import com.teragrep.net_01.channel.socket.PlainFactory;
+import com.teragrep.net_01.channel.socket.TLSFactory;
 import com.teragrep.net_01.eventloop.EventLoop;
 import com.teragrep.net_01.eventloop.EventLoopFactory;
 import com.teragrep.net_01.server.Server;
 import com.teragrep.net_01.server.ServerFactory;
+import com.teragrep.rlp_01.client.RelpConfig;
+import com.teragrep.rlp_01.client.RelpConnectionFactory;
+import com.teragrep.rlp_01.client.SSLContextSupplier;
+import com.teragrep.rlp_01.client.SSLContextSupplierKeystore;
 import com.teragrep.rlp_03.frame.FrameDelegationClockFactory;
 import com.teragrep.rlp_03.frame.delegate.DefaultFrameDelegate;
 import com.teragrep.rlp_03.frame.delegate.FrameDelegate;
 import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
+import com.teragrep.rlp_11.Configuration.TLSConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,19 +80,24 @@ import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ConnectionTest {
 
     private final int serverPort = 12345;
+    private final int tlsServerPort = 12346;
     private Thread eventLoopThread;
     private EventLoop eventLoop;
     private ThreadPoolExecutor threadPoolExecutor;
     private final List<String> records = new ArrayList<>();
     private Server server;
+    private Server tlsServer;
 
     @BeforeEach
     public void startServer() {
+        final Map<String, String> tlsConfig = Assertions
+                .assertDoesNotThrow(() -> new PathConfiguration("src/test/resources/tls-connect.properties").asMap());
         EventLoopFactory eventLoopFactory = new EventLoopFactory();
         eventLoop = Assertions.assertDoesNotThrow(eventLoopFactory::create);
 
@@ -109,7 +123,27 @@ public class ConnectionTest {
                 new PlainFactory(),
                 new FrameDelegationClockFactory(frameDelegateSupplier)
         );
+
+        final TLSConfiguration tlsConfiguration = new TLSConfiguration(tlsConfig);
+        final SSLContextSupplier sslContextSupplier = new SSLContextSupplierKeystore(
+                tlsConfiguration.keyStorePath(),
+                tlsConfiguration.keyStorePassword(),
+                tlsConfiguration.protocol()
+        );
+        final SSLContext context = sslContextSupplier.get();
+        final Function<SSLContext, SSLEngine> sslEngineFunction = (ctx) -> {
+            final SSLEngine sslEngine = ctx.createSSLEngine();
+            sslEngine.setUseClientMode(false);
+            return sslEngine;
+        };
+        final ServerFactory tlsServerFactory = new ServerFactory(
+                eventLoop,
+                threadPoolExecutor,
+                new TLSFactory(context, sslEngineFunction),
+                new FrameDelegationClockFactory(frameDelegateSupplier)
+        );
         server = Assertions.assertDoesNotThrow(() -> serverFactory.create(serverPort));
+        tlsServer = Assertions.assertDoesNotThrow(() -> tlsServerFactory.create(tlsServerPort));
     }
 
     @AfterEach
@@ -118,6 +152,7 @@ public class ConnectionTest {
         threadPoolExecutor.shutdown();
         Assertions.assertDoesNotThrow(() -> eventLoopThread.join());
         Assertions.assertDoesNotThrow(server::close);
+        Assertions.assertDoesNotThrow(tlsServer::close);
         records.clear();
     }
 
@@ -130,7 +165,18 @@ public class ConnectionTest {
         final TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
 
+        final RelpConfig relpConfig = new RelpConfig(
+                targetConfiguration.hostname(),
+                targetConfiguration.port(),
+                targetConfiguration.reconnectInterval(),
+                5,
+                true,
+                Duration.ofSeconds(10),
+                true
+        );
+        final RelpConnectionFactory relpConnectionFactory = new RelpConnectionFactory(relpConfig);
         RelpProbe relpProbe = new RelpProbe(
+                relpConnectionFactory,
                 targetConfiguration,
                 probeConfiguration,
                 metricsConfiguration,
@@ -138,6 +184,51 @@ public class ConnectionTest {
                 new MetricRegistry()
         );
 
+        TimerTask task = new TimerTask() {
+
+            public void run() {
+                relpProbe.stop();
+            }
+        };
+        Timer timer = new Timer("Timer");
+        timer.schedule(task, 5_000L);
+
+        relpProbe.start();
+    }
+
+    @Test
+    public void connectToTSLServerTest() {
+        final Map<String, String> map = Assertions
+                .assertDoesNotThrow(() -> new PathConfiguration("src/test/resources/tls-connect.properties").asMap());
+        final ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
+        final RecordFactory recordFactory = new RecordFactory("localhost", "rlp_11", "rlp_11");
+        final TargetConfiguration targetConfiguration = new TargetConfiguration(map);
+        final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        final TLSConfiguration tlsConfiguration = new TLSConfiguration(map);
+
+        final RelpConfig relpConfig = new RelpConfig(
+                targetConfiguration.hostname(),
+                targetConfiguration.port(),
+                targetConfiguration.reconnectInterval(),
+                5,
+                true,
+                Duration.ofSeconds(10),
+                true
+        );
+        final SSLContextSupplier sslContextSupplier = new SSLContextSupplierKeystore(
+                tlsConfiguration.keyStorePath(),
+                tlsConfiguration.keyStorePassword(),
+                tlsConfiguration.protocol()
+        );
+        final RelpConnectionFactory relpConnectionFactory = new RelpConnectionFactory(relpConfig, sslContextSupplier);
+        RelpProbe relpProbe = new RelpProbe(
+                relpConnectionFactory,
+                targetConfiguration,
+                probeConfiguration,
+                metricsConfiguration,
+                recordFactory,
+                new MetricRegistry()
+        );
         TimerTask task = new TimerTask() {
 
             public void run() {
