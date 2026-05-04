@@ -48,10 +48,14 @@ package com.teragrep.rlp_11;
 import com.codahale.metrics.MetricRegistry;
 import com.teragrep.cnf_01.ConfigurationException;
 import com.teragrep.cnf_01.PathConfiguration;
+import com.teragrep.rlp_01.client.RelpConfig;
+import com.teragrep.rlp_01.client.RelpConnectionFactory;
+import com.teragrep.rlp_01.client.SSLContextSupplierKeystore;
 import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.RecordConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
 import com.teragrep.rlp_11.Configuration.PrometheusConfiguration;
+import com.teragrep.rlp_11.Configuration.TLSConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
 import com.teragrep.rlp_11.metrics.HttpReport;
 import com.teragrep.rlp_11.metrics.JmxReport;
@@ -63,6 +67,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.Duration;
 import java.util.Map;
 
 public class Main {
@@ -85,14 +90,42 @@ public class Main {
         final RecordConfiguration recordConfiguration = new RecordConfiguration(map);
         final TargetConfiguration targetConfiguration = new TargetConfiguration(map);
         final MetricsConfiguration metricsConfiguration = new MetricsConfiguration(map);
+        final TLSConfiguration tlsConfiguration = new TLSConfiguration(map);
+
         final RecordFactory recordFactory = new RecordFactory(
                 getHostname(),
                 recordConfiguration.hostname(),
                 recordConfiguration.appname()
         );
+
+        final RelpConfig relpConfig = new RelpConfig(
+                targetConfiguration.hostname(),
+                targetConfiguration.port(),
+                targetConfiguration.reconnectInterval(),
+                5,
+                true,
+                Duration.ofSeconds(10),
+                true
+        );
+
+        final RelpConnectionFactory connectionFactory;
+        if (tlsConfiguration.isTLSEnabled()) {
+            LOGGER.info("TLS connection enabled");
+            final SSLContextSupplierKeystore sslContextSupplierKeystore = new SSLContextSupplierKeystore(
+                    tlsConfiguration.keyStorePath(),
+                    tlsConfiguration.keyStorePassword(),
+                    tlsConfiguration.protocol()
+            );
+            connectionFactory = new RelpConnectionFactory(relpConfig, sslContextSupplierKeystore);
+        }
+        else {
+            connectionFactory = new RelpConnectionFactory(relpConfig);
+        }
+
         final ProbeConfiguration probeConfiguration = new ProbeConfiguration(map);
         final MetricRegistry metricRegistry = new MetricRegistry();
         final RelpProbe relpProbe = new RelpProbe(
+                connectionFactory,
                 targetConfiguration,
                 probeConfiguration,
                 metricsConfiguration,

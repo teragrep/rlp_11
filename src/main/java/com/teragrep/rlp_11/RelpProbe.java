@@ -50,7 +50,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SlidingWindowReservoir;
 import com.codahale.metrics.Timer;
 import com.teragrep.rlp_01.RelpBatch;
-import com.teragrep.rlp_01.RelpConnection;
+import com.teragrep.rlp_01.client.IManagedRelpConnection;
+import com.teragrep.rlp_01.client.RelpConnectionFactory;
 import com.teragrep.rlp_11.Configuration.ProbeConfiguration;
 import com.teragrep.rlp_11.Configuration.MetricsConfiguration;
 import com.teragrep.rlp_11.Configuration.TargetConfiguration;
@@ -61,7 +62,6 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.codahale.metrics.MetricRegistry.name;
@@ -69,14 +69,16 @@ import static com.codahale.metrics.MetricRegistry.name;
 public class RelpProbe {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RelpProbe.class);
+    private final RelpConnectionFactory connectionFactory;
     private final TargetConfiguration targetConfiguration;
     private final RecordFactory recordFactory;
     private final ProbeConfiguration probeConfiguration;
     private final AtomicBoolean stayRunning = new AtomicBoolean(true);
-    private RelpConnection relpConnection;
+    private IManagedRelpConnection relpConnection;
     private final CountDownLatch latch = new CountDownLatch(1);
     private boolean connected = false;
     private final Counter records;
+    // TODO resend count could be made available from rlp_01
     private final Counter resends;
     private final Counter connects;
     private final Counter disconnects;
@@ -85,6 +87,7 @@ public class RelpProbe {
     private final Timer connectLatency;
 
     public RelpProbe(
+            final RelpConnectionFactory connectionFactory,
             final TargetConfiguration targetConfiguration,
             final ProbeConfiguration probeConfiguration,
             final MetricsConfiguration metricsConfiguration,
@@ -92,6 +95,7 @@ public class RelpProbe {
             final MetricRegistry metricRegistry
     ) {
         this(
+                connectionFactory,
                 targetConfiguration,
                 probeConfiguration,
                 recordFactory,
@@ -105,6 +109,7 @@ public class RelpProbe {
     }
 
     public RelpProbe(
+            final RelpConnectionFactory connectionFactory,
             final TargetConfiguration targetConfiguration,
             final ProbeConfiguration probeConfiguration,
             final RecordFactory recordFactory,
@@ -116,6 +121,7 @@ public class RelpProbe {
             final Timer sendLatency,
             final Timer connectLatency
     ) {
+        this.connectionFactory = connectionFactory;
         this.targetConfiguration = targetConfiguration;
         this.probeConfiguration = probeConfiguration;
         this.recordFactory = recordFactory;
@@ -129,33 +135,16 @@ public class RelpProbe {
     }
 
     public void start() {
-        relpConnection = new RelpConnection();
         connect();
         while (stayRunning.get()) {
             final RelpBatch relpBatch = new RelpBatch();
             relpBatch.insert(recordFactory.createRecord());
 
-            boolean allSent = false;
-            while (!allSent && stayRunning.get()) {
-                try (final Timer.Context context = sendLatency.time()) {
-                    LOGGER.debug("Committing Relpbatch");
-                    relpConnection.commit(relpBatch);
-                    records.inc();
-                }
-                catch (IllegalStateException | IOException | java.util.concurrent.TimeoutException e) {
-                    LOGGER.warn("Failed to commit: <{}>", e.getMessage());
-                    relpConnection.tearDown();
-                    connected = false;
-                }
-                LOGGER.debug("Verifying Transaction");
-                allSent = relpBatch.verifyTransactionAll();
-                if (!allSent) {
-                    LOGGER.warn("Transactions failed, retrying");
-                    resends.inc();
-                    relpBatch.retryAllFailed();
-                    reconnect();
-                }
+            try (final Timer.Context context = sendLatency.time()) {
+                relpConnection.ensureSent(relpBatch);
+                records.inc();
             }
+
             try {
                 LOGGER.debug("Sleeping before sending next record");
                 TimeUnit.MILLISECONDS.sleep(probeConfiguration.interval());
@@ -164,7 +153,13 @@ public class RelpProbe {
                 LOGGER.warn("Sleep interrupted: <{}>", e.getMessage());
             }
         }
-        disconnect();
+        try {
+            relpConnection.close();
+            disconnects.inc();
+        }
+        catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         latch.countDown();
     }
 
@@ -172,11 +167,13 @@ public class RelpProbe {
         while (!connected && stayRunning.get()) {
             try (final Timer.Context context = connectLatency.time()) {
                 LOGGER.debug("Connecting to <[{}:{}]>", targetConfiguration.hostname(), targetConfiguration.port());
-                connected = relpConnection.connect(targetConfiguration.hostname(), targetConfiguration.port());
+                relpConnection = connectionFactory.get();
+                relpConnection.connect();
+                connected = true;
                 LOGGER.debug("Connected.");
                 connects.inc();
             }
-            catch (TimeoutException | IOException e) {
+            catch (IOException e) {
                 LOGGER
                         .warn(
                                 "Failed to connect to <[{}:{}]>: <{}>", targetConfiguration.hostname(),
@@ -194,29 +191,6 @@ public class RelpProbe {
                 }
             }
         }
-    }
-
-    private void reconnect() {
-        disconnect();
-        connect();
-    }
-
-    private void disconnect() {
-        if (!connected) {
-            LOGGER.debug("No need to disconnect, not connected");
-            return;
-        }
-        try {
-            LOGGER.debug("Disconnecting..");
-            relpConnection.disconnect();
-            disconnects.inc();
-        }
-        catch (IOException | TimeoutException e) {
-            LOGGER.warn("Failed to disconnect: <{}>", e.getMessage());
-        }
-        relpConnection.tearDown();
-        LOGGER.debug("Disconnected.");
-        connected = false;
     }
 
     public void stop() {
